@@ -1,3 +1,8 @@
+use clap::StructOpt;
+
+mod args;
+
 fn main() {
-    println!("Hello, world!");
+    let cli = args::Args::parse();
+    println!("{:?}", cli);
 }
