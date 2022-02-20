@@ -5,7 +5,8 @@ use std::io::{Read, Write};
 use flate2::Compression;
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
-use thiserror::Error;
+use crate::bpdata::BlueprintData;
+use crate::error::{Error, some_error};
 
 use crate::md5::{MD5Hash, Algo, MD5};
 
@@ -15,31 +16,15 @@ pub struct Blueprint {
     timestamp: u64,
     game_version: String,
     short_desc: String,
-    data: Vec<u8>,
-}
-
-#[derive(Debug, Error)]
-pub enum BpError {
-    #[error("{0}")]
-    E(String),
-}
-
-impl<T: Into<String>> From<T> for BpError {
-    fn from(s: T) -> Self {
-        Self::E(s.into())
-    }
-}
-
-fn some_error<T: Into<String>>(s: T) -> anyhow::Error {
-    BpError::from(s).into()
+    data: BlueprintData,
 }
 
 impl Blueprint {
-    fn int<T: FromStr>(data: &str, what: &str) -> Result<T, BpError> {
+    fn int<T: FromStr>(data: &str, what: &str) -> Result<T, Error> {
         str::parse(data).map_err(|_| format!("Failed to parse {}", what).into())
     }
 
-    fn unpack_data(b64data: &str) -> anyhow::Result<Vec<u8>> {
+    fn unpack_data(b64data: &str) -> anyhow::Result<BlueprintData> {
         let b64data = &b64data[1..];     // Skip first quote
 
         let zipped_data = base64::decode(b64data).map_err(|_| some_error("Failed to base64 decode blueprint"))?;
@@ -47,7 +32,7 @@ impl Blueprint {
         let mut data = vec![];
         d.read_to_end(&mut data)?;
 
-        Ok(data)
+        BlueprintData::new_from_buf(&data)
     }
 
     fn hash_str_to_hash(d: &str) -> anyhow::Result<MD5Hash> {
@@ -65,11 +50,12 @@ impl Blueprint {
         MD5::new(Algo::MD5F).process(data.as_bytes())
     }
 
-    fn pack_data(&self) -> String {
+    fn pack_data(&self) -> anyhow::Result<String> {
         let mut e = GzEncoder::new(Vec::new(), Compression::default());
-        e.write_all(&self.data).unwrap();
+        let data = self.data.write()?;
+        e.write_all(&data).unwrap();
         let gzipped_data = e.finish().unwrap();
-        base64::encode(gzipped_data.as_slice())
+        Ok(base64::encode(gzipped_data.as_slice()))
     }
 
     pub fn new(data: &str) -> anyhow::Result<Self> {
@@ -127,16 +113,16 @@ impl Blueprint {
         })
     }
 
-    pub fn into_bp_string(&self) -> String {
+    pub fn into_bp_string(&self) -> anyhow::Result<String> {
         let icons = self.icons.map(|x| x.to_string()).join(",");
         let mut out = format!("BLUEPRINT:0,{},{},0,{},{},{},\"{}",
                 self.layout, icons, self.timestamp, self.game_version,
-                self.short_desc, self.pack_data());
+                self.short_desc, self.pack_data()?);
         let hash = Self::hash(&out);
         write!(&mut out, "\"").unwrap();
         for b in hash {
             write!(&mut out, "{:02X}", b).unwrap();
         }
-        out
+        Ok(out)
     }
 }

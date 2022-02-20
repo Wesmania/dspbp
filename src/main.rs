@@ -5,8 +5,10 @@ use clap::StructOpt;
 
 mod args;
 mod blueprint;
+mod error;
 mod md5;
-
+mod bpdata;
+mod serialize;
 
 fn main() -> anyhow::Result<()> {
     let args = args::Args::parse();
@@ -18,7 +20,7 @@ fn main() -> anyhow::Result<()> {
             stdin.read_to_end(&mut data)?;
             let data = String::from_utf8(data)?;
             let bp = Blueprint::new(&data)?;
-            print!("{}", bp.into_bp_string());
+            print!("{}", bp.into_bp_string()?);
         }
     }
     Ok(())

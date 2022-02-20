@@ -12,3 +12,7 @@ base64 = "*"
 anyhow = "*"
 thiserror = "*"
 lazy_static = "*"
+serde = { version = "*", features = ["derive"] }
+struct_deser = "*"
+struct_deser-derive = "*"
+num_enum = "*"
