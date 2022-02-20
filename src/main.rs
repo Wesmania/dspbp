@@ -5,7 +5,7 @@ use clap::StructOpt;
 
 mod args;
 mod blueprint;
-
+mod md5;
 
 
 fn main() -> anyhow::Result<()> {
