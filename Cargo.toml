@@ -16,3 +16,4 @@ serde = { version = "*", features = ["derive"] }
 struct_deser = "*"
 struct_deser-derive = "*"
 num_enum = "*"
+serde_json = "*"

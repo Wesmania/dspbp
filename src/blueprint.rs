@@ -5,11 +5,13 @@ use std::io::{Read, Write};
 use flate2::Compression;
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
+use serde::{Deserialize, Serialize};
 use crate::bpdata::BlueprintData;
 use crate::error::{Error, some_error};
 
 use crate::md5::{MD5Hash, Algo, MD5};
 
+#[derive(Serialize, Deserialize)]
 pub struct Blueprint {
     layout: u32,
     icons: [u32; 5],
@@ -124,5 +126,13 @@ impl Blueprint {
             write!(&mut out, "{:02X}", b).unwrap();
         }
         Ok(out)
+    }
+
+    pub fn new_from_json(json: &str) -> anyhow::Result<Self> {
+        Ok(serde_json::from_str(json)?)
+    }
+
+    pub fn dump_json(&self) -> anyhow::Result<Vec<u8>> {
+        Ok(serde_json::to_vec(self)?)
     }
 }

@@ -10,4 +10,6 @@ pub struct Args {
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     Dump,
+    Parse,
+    Undump,
 }
