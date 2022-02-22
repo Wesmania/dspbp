@@ -312,7 +312,7 @@ impl Station {
 pub struct Building {
     header: BuildingHeader,
     station: Option<Station>,
-    params: Vec<u8>,
+    params: Vec<u32>,
 }
 
 impl BuildingHeader {
@@ -335,11 +335,14 @@ impl Building {
     fn from_bp(d: &mut Deser) -> anyhow::Result<Self> {
         let header: BuildingHeader = d.read_type()?;
         let mut station = None;
-        let mut params = vec![];
+        let mut params: Vec<u32> = vec![];
         if header.has_station() {
             station = Some(Station::from_bp(d, header.has_interstellar(), header.parameter_count as usize * 4)?);
         } else {
-            params.extend_from_slice(d.skip(header.parameter_count as usize * 4)?);
+            params.append(&mut d.skip(header.parameter_count as usize * 4)?
+                                     .chunks_exact(4)
+                                     .map(|b| u32::from_le_bytes(b.try_into().unwrap()))
+                                     .collect());
         }
         Ok(Self {
             header,
@@ -353,7 +356,11 @@ impl Building {
         if self.station.is_some() {
             self.station.as_ref().unwrap().to_bp(d, self.header.parameter_count as usize * 4)?;
         } else {
-            d.append(&self.params);
+            let le32_vec: Vec<u8> = self.params
+                .iter()
+                .flat_map(|b| b.to_le_bytes().into_iter())
+                .collect();
+            d.append(&le32_vec);
         }
         Ok(())
     }
