@@ -380,6 +380,9 @@ pub struct BlueprintData {
 impl BlueprintData {
     fn from_bp(d: &mut Deser) -> anyhow::Result<Self> {
         let header: Header = d.read_type()?;
+        if header.version != 1 {
+            return Err(Error::E(format!("Expected blueprint version 1, got {}", header.version)).into());
+        }
         let mut areas = vec![];
         let mut buildings = vec![];
         for _ in 0..header.area_count {
