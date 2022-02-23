@@ -1,12 +1,12 @@
-use serde::{Serialize, Deserialize};
-use struct_deser::{SerializedByteLen, FromBytesOrdered, IntoBytesOrdered};
+use serde::{Deserialize, Serialize};
+use struct_deser::{FromBytesOrdered, IntoBytesOrdered, SerializedByteLen};
 
-pub mod enums;
-pub mod blueprint;
 pub mod area;
-pub mod building;
-pub mod station;
 pub mod belt;
+pub mod blueprint;
+pub mod building;
+pub mod enums;
+pub mod station;
 pub mod vec;
 
 // Because StructDeser isn't perfect
@@ -28,4 +28,3 @@ impl IntoBytesOrdered for F32 {
         BO::write_f32(bytes, self.0);
     }
 }
-

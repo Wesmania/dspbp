@@ -5,8 +5,10 @@ use crate::serialize::{Deser, Ser};
 
 #[derive(Serialize, Deserialize, StructDeser)]
 pub struct Belt {
-    #[le] label: u32,
-    #[le] count: u32,
+    #[le]
+    label: u32,
+    #[le]
+    count: u32,
 }
 
 impl Belt {

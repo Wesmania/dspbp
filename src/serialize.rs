@@ -43,7 +43,7 @@ impl Ser {
     pub fn data(self) -> Vec<u8> {
         self.0
     }
-    
+
     pub fn len(&self) -> usize {
         self.0.len()
     }
@@ -53,7 +53,7 @@ impl Ser {
         t.into_bytes(&mut din);
         self.0.append(&mut din);
     }
-    
+
     pub fn pad(&mut self, count: usize) {
         let l = self.0.len();
         self.0.resize(l + count, 0);

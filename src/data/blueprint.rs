@@ -1,22 +1,32 @@
 use serde::{Deserialize, Serialize};
 use struct_deser_derive::StructDeser;
 
-use crate::{serialize::{Deser, Ser}, error::Error, data::{building::Building, area::Area}};
-
+use crate::{
+    data::{area::Area, building::Building},
+    error::Error,
+    serialize::{Deser, Ser},
+};
 
 #[derive(Serialize, Deserialize, StructDeser)]
 pub struct Header {
-    #[le] version: u32,
-    #[le] cursor_offset_x: u32,
-    #[le] cursor_offset_y: u32,
-    #[le] cursor_target_area: u32,
-    #[le] dragbox_size_x: u32,
-    #[le] dragbox_size_y: u32,
-    #[le] primary_area_index: u32,
+    #[le]
+    version: u32,
+    #[le]
+    cursor_offset_x: u32,
+    #[le]
+    cursor_offset_y: u32,
+    #[le]
+    cursor_target_area: u32,
+    #[le]
+    dragbox_size_x: u32,
+    #[le]
+    dragbox_size_y: u32,
+    #[le]
+    primary_area_index: u32,
     area_count: u8,
 }
 
-#[derive(Serialize, Deserialize,StructDeser)]
+#[derive(Serialize, Deserialize, StructDeser)]
 pub struct BuildingCount(#[le] u32);
 
 #[derive(Serialize, Deserialize)]
@@ -31,7 +41,11 @@ impl BlueprintData {
     fn from_bp(d: &mut Deser) -> anyhow::Result<Self> {
         let header: Header = d.read_type()?;
         if header.version != 1 {
-            return Err(Error::E(format!("Expected blueprint version 1, got {}", header.version)).into());
+            return Err(Error::E(format!(
+                "Expected blueprint version 1, got {}",
+                header.version
+            ))
+            .into());
         }
         let mut areas = vec![];
         let mut buildings = vec![];

@@ -1,15 +1,15 @@
 use std::fmt::Write as _;
-use std::str::FromStr;
 use std::io::{Read, Write};
+use std::str::FromStr;
 
-use flate2::Compression;
+use crate::data::blueprint::BlueprintData;
+use crate::error::{some_error, Error};
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
+use flate2::Compression;
 use serde::{Deserialize, Serialize};
-use crate::data::blueprint::BlueprintData;
-use crate::error::{Error, some_error};
 
-use crate::md5::{MD5Hash, Algo, MD5};
+use crate::md5::{Algo, MD5Hash, MD5};
 
 #[derive(Serialize, Deserialize)]
 pub struct Blueprint {
@@ -27,9 +27,10 @@ impl Blueprint {
     }
 
     fn unpack_data(b64data: &str) -> anyhow::Result<BlueprintData> {
-        let b64data = &b64data[1..];     // Skip first quote
+        let b64data = &b64data[1..]; // Skip first quote
 
-        let zipped_data = base64::decode(b64data).map_err(|_| some_error("Failed to base64 decode blueprint"))?;
+        let zipped_data =
+            base64::decode(b64data).map_err(|_| some_error("Failed to base64 decode blueprint"))?;
         let mut d = GzDecoder::new(zipped_data.as_slice());
         let mut data = vec![];
         d.read_to_end(&mut data)?;
@@ -39,13 +40,18 @@ impl Blueprint {
 
     fn hash_str_to_hash(d: &str) -> anyhow::Result<MD5Hash> {
         if d.len() != 32 {
-            return Err(some_error(format!("Unexpected hash length, expected 32, got {}", d.len())));
+            return Err(some_error(format!(
+                "Unexpected hash length, expected 32, got {}",
+                d.len()
+            )));
         }
         Ok((0..16)
-            .map(|x| (2 * x .. 2 * x + 2))
+            .map(|x| (2 * x..2 * x + 2))
             .map(|x| &d[x])
             .map(|x| u8::from_str_radix(x, 16))
-            .collect::<Result<Vec<_>, _>>()?.try_into().unwrap())
+            .collect::<Result<Vec<_>, _>>()?
+            .try_into()
+            .unwrap())
     }
 
     fn hash(data: &str) -> MD5Hash {
@@ -71,28 +77,38 @@ impl Blueprint {
         let hash = Self::hash_str_to_hash(hash)?;
         let our_hash = Self::hash(data);
         if hash != our_hash {
-            return Err(some_error(format!("Blueprint hash does not match calculated hash: {:x?} != {:x?}", hash, our_hash)));
+            return Err(some_error(format!(
+                "Blueprint hash does not match calculated hash: {:x?} != {:x?}",
+                hash, our_hash
+            )));
         }
 
         const PREFIX: &str = "BLUEPRINT:";
         if data.len() < PREFIX.len() || &data[0..PREFIX.len()] != PREFIX {
             let ml = std::cmp::min(PREFIX.len(), data.len());
-            return Err(some_error(format!("Unexpected prefix: {}", &data[0..ml])))
+            return Err(some_error(format!("Unexpected prefix: {}", &data[0..ml])));
         }
         data = &data[PREFIX.len()..];
 
         let fields: Vec<&str> = data.split(',').collect();
         if fields.len() != 12 {
-            return Err(some_error(format!("Expected 12 CSV elements, got {}", fields.len())));
+            return Err(some_error(format!(
+                "Expected 12 CSV elements, got {}",
+                fields.len()
+            )));
         }
 
         let [fixed0_1, layout]: [&str; 2] = fields[0..2].try_into().unwrap();
         let icons = &fields[2..7];
-        let [fixed0_2, timestamp, game_version, short_desc, b64data]: [&str; 5] = fields[7..12].try_into().unwrap();
+        let [fixed0_2, timestamp, game_version, short_desc, b64data]: [&str; 5] =
+            fields[7..12].try_into().unwrap();
 
         let fixed0_1: u32 = Self::int(fixed0_1, "fixed0_1")?;
         let layout = Self::int(layout, "layout")?;
-        let icons: Vec<u32> = icons.into_iter().map(|x| Self::int(*x, "icon")).collect::<Result<Vec<_>, _>>()?;
+        let icons: Vec<u32> = icons
+            .into_iter()
+            .map(|x| Self::int(*x, "icon"))
+            .collect::<Result<Vec<_>, _>>()?;
         let fixed0_2: u32 = Self::int(fixed0_2, "fixed0_2")?;
         let timestamp = Self::int(timestamp, "timestamp")?;
 
@@ -117,9 +133,15 @@ impl Blueprint {
 
     pub fn into_bp_string(&self) -> anyhow::Result<String> {
         let icons = self.icons.map(|x| x.to_string()).join(",");
-        let mut out = format!("BLUEPRINT:0,{},{},0,{},{},{},\"{}",
-                self.layout, icons, self.timestamp, self.game_version,
-                self.short_desc, self.pack_data()?);
+        let mut out = format!(
+            "BLUEPRINT:0,{},{},0,{},{},{},\"{}",
+            self.layout,
+            icons,
+            self.timestamp,
+            self.game_version,
+            self.short_desc,
+            self.pack_data()?
+        );
         let hash = Self::hash(&out);
         write!(&mut out, "\"").unwrap();
         for b in hash {

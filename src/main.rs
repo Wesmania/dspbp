@@ -1,7 +1,7 @@
-use std::io::{Read, Write};
 use args::Commands;
 use blueprint::Blueprint;
 use clap::StructOpt;
+use std::io::{Read, Write};
 
 mod args;
 mod blueprint;
@@ -26,30 +26,32 @@ fn main() -> anyhow::Result<()> {
     };
     let mut output: Box<dyn Write> = match iof(&args.output) {
         None => Box::new(std::io::stdout()),
-        Some(file) => Box::new(std::fs::OpenOptions::new()
-                          .write(true)
-                          .truncate(true)
-                          .create(true)
-                          .open(file)?),
+        Some(file) => Box::new(
+            std::fs::OpenOptions::new()
+                .write(true)
+                .truncate(true)
+                .create(true)
+                .open(file)?,
+        ),
     };
 
     match args.command {
         Commands::Parse => {
-            let mut data = vec!();
+            let mut data = vec![];
             input.read_to_end(&mut data)?;
             let data = String::from_utf8(data)?;
             let bp = Blueprint::new(&data)?;
             output.write_all(bp.into_bp_string()?.as_bytes())?;
         }
         Commands::Dump => {
-            let mut data = vec!();
+            let mut data = vec![];
             input.read_to_end(&mut data)?;
             let data = String::from_utf8(data)?;
             let bp = Blueprint::new(&data)?;
             output.write_all(&bp.dump_json()?)?;
         }
         Commands::Undump => {
-            let mut data = vec!();
+            let mut data = vec![];
             input.read_to_end(&mut data)?;
             let data = String::from_utf8(data)?;
             let bp = Blueprint::new_from_json(&data)?;
