@@ -219,7 +219,9 @@ pub struct StationHeader {
 #[derive(Serialize, Deserialize, StructDeser)]
 pub struct StationSlots {
     #[le] direction: u32,
-    #[le] storage_index: u32
+    #[le] storage_index: u32,
+    #[le] _unused1: u32,
+    #[le] _unused2: u32,
 }
 
 #[derive(Serialize, Deserialize, StructDeser)]
@@ -228,6 +230,8 @@ pub struct StationStorage {
     #[le] local_logic: u32,
     #[le] remote_logic: u32,
     #[le] max_count: u32,
+    #[le] _unused1: u32,
+    #[le] _unused2: u32,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -245,7 +249,7 @@ impl Station {
     fn from_bp(d: &mut Deser, is_interstellar: bool, struct_len: usize) -> anyhow::Result<Self> {
 
         let slots_len = 12;
-        let storage_len = if is_interstellar { 3 } else { 5 };
+        let storage_len = if is_interstellar { 5 } else { 3 };
 
         let mut storage = vec![];
         let mut slots = vec![];
