@@ -4,6 +4,8 @@ use struct_deser::SerializedByteLen;
 
 use crate::{serialize::{Deser, Ser}, error::Error};
 
+use super::vec::{to32le, from32le};
+
 #[derive(Serialize, Deserialize, StructDeser)]
 pub struct StationHeader {
     #[le] work_energy: u32,
@@ -40,7 +42,7 @@ pub struct Station {
     is_interstellar: bool,
     storage: Vec<StationStorage>,
     slots: Vec<StationSlots>,
-    unknown: Vec<u8>,
+    unknown: Vec<u32>,
 }
 
 impl Station {
@@ -76,7 +78,7 @@ impl Station {
         if end_len < end_off {
             return Err(Error::E(format!("Unexpected station data length {} at read", struct_len)).into());
         }
-        let unknown = d.skip(end_len - end_off)?.to_vec();    // TODO might always be empty?
+        let unknown = to32le(d.skip(end_len - end_off)?);    // TODO might always be empty?
 
         Ok(Self {
             header,
@@ -109,7 +111,7 @@ impl Station {
             s.write_type(sl);
         }
 
-        s.append(&self.unknown);
+        s.append(&from32le(&self.unknown));
         
         Ok(())
     }

@@ -3,7 +3,7 @@ use struct_deser_derive::StructDeser;
 
 use crate::serialize::{Deser, Ser};
 
-use super::{F32, station::Station, enums::DSPItem};
+use super::{F32, station::Station, enums::DSPItem, vec::{to32le, from32le}};
 
 #[derive(Serialize, Deserialize)]
 pub enum BuildingParam {
@@ -17,10 +17,7 @@ impl BuildingParam {
             let station = Station::from_bp(d, header.has_interstellar(), header.parameter_count as usize * 4)?;
             Ok(BuildingParam::Station(station))
         } else {
-            let params: Vec<u32> = d.skip(header.parameter_count as usize * 4)?
-                .chunks_exact(4)
-                .map(|b| u32::from_le_bytes(b.try_into().unwrap()))
-                .collect();
+            let params: Vec<u32> = to32le(d.skip(header.parameter_count as usize * 4)?);
             Ok(BuildingParam::Unknown(params))
         }
     }
@@ -36,11 +33,7 @@ impl BuildingParam {
         match self {
             Self::Station(s) => s.to_bp(d),
             Self::Unknown(v) => {
-                let le32_vec: Vec<u8> = v
-                    .iter()
-                    .flat_map(|b| b.to_le_bytes().into_iter())
-                    .collect();
-                d.append(&le32_vec);
+                d.append(&from32le(v));
                 Ok(())
             }
         }

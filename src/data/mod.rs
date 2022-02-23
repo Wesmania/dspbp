@@ -6,6 +6,7 @@ pub mod blueprint;
 pub mod area;
 pub mod building;
 pub mod station;
+pub mod vec;
 
 // Because StructDeser isn't perfect
 #[derive(Serialize, Deserialize)]
