@@ -3,11 +3,12 @@ use struct_deser_derive::StructDeser;
 
 use crate::serialize::{Deser, Ser};
 
-use super::{F32, station::Station, enums::DSPItem, vec::{to32le, from32le}};
+use super::{F32, station::Station, enums::DSPItem, vec::{to32le, from32le}, belt::Belt};
 
 #[derive(Serialize, Deserialize)]
 pub enum BuildingParam {
     Station(Station),
+    Belt(Option<Belt>),
     Unknown(Vec<u32>),
 }
 
@@ -16,6 +17,13 @@ impl BuildingParam {
         if header.has_station() {
             let station = Station::from_bp(d, header.has_interstellar(), header.parameter_count as usize * 4)?;
             Ok(BuildingParam::Station(station))
+        } else if header.is_belt() {
+            let belt = if header.parameter_count > 0 {
+                Some(Belt::from_bp(d)?)
+            } else {
+                None
+            };
+            Ok(BuildingParam::Belt(belt))
         } else {
             let params: Vec<u32> = to32le(d.skip(header.parameter_count as usize * 4)?);
             Ok(BuildingParam::Unknown(params))
@@ -24,14 +32,18 @@ impl BuildingParam {
 
     pub fn bp_len(&self) -> usize {
         match self {
-            BuildingParam::Station(s) => s.bp_len(),
-            BuildingParam::Unknown(v) => v.len() * 4,
+            Self::Station(s) => s.bp_len(),
+            Self::Belt(Some(b)) => b.bp_len(),
+            Self::Belt(None) => 0,
+            Self::Unknown(v) => v.len() * 4,
         }
     }
 
     pub fn to_bp(&self, d: &mut Ser) -> anyhow::Result<()> {
         match self {
             Self::Station(s) => s.to_bp(d),
+            Self::Belt(Some(b)) => Ok(b.to_bp(d)),
+            Self::Belt(None) => Ok(()),
             Self::Unknown(v) => {
                 d.append(&from32le(v));
                 Ok(())
@@ -86,6 +98,16 @@ impl BuildingHeader {
             Ok(DSPItem::InterstellarLogisticsStation) => true,
             _ => false,
         }
+    }
+
+    fn is_belt(&self) -> bool {
+        let belts = [
+            DSPItem::ConveyorBeltMKI,
+            DSPItem::ConveyorBeltMKII,
+            DSPItem::ConveyorBeltMKIII,
+        ];
+        DSPItem::try_from(self.item_id)
+            .map_or(false, |i| belts.contains(&i))
     }
 }
 

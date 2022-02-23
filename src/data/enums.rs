@@ -1,6 +1,6 @@
 use num_enum::TryFromPrimitive;
 
-#[derive(TryFromPrimitive)]
+#[derive(TryFromPrimitive, PartialEq, Eq)]
 #[repr(u16)]
 pub enum DSPItem {
     IronOre = 1001,
