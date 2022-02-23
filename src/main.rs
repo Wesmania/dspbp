@@ -5,9 +5,9 @@ use clap::StructOpt;
 
 mod args;
 mod blueprint;
+mod data;
 mod error;
 mod md5;
-mod bpdata;
 mod serialize;
 
 fn iof(arg: &Option<String>) -> Option<&str> {

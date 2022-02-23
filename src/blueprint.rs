@@ -6,7 +6,7 @@ use flate2::Compression;
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use serde::{Deserialize, Serialize};
-use crate::bpdata::BlueprintData;
+use crate::data::blueprint::BlueprintData;
 use crate::error::{Error, some_error};
 
 use crate::md5::{MD5Hash, Algo, MD5};
