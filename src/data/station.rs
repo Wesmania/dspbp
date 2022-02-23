@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
 use struct_deser_derive::StructDeser;
+use struct_deser::SerializedByteLen;
 
 use crate::{serialize::{Deser, Ser}, error::Error};
 
@@ -39,6 +40,7 @@ pub struct Station {
     is_interstellar: bool,
     storage: Vec<StationStorage>,
     slots: Vec<StationSlots>,
+    unknown: Vec<u8>,
 }
 
 impl Station {
@@ -74,21 +76,26 @@ impl Station {
         if end_len < end_off {
             return Err(Error::E(format!("Unexpected station data length {} at read", struct_len)).into());
         }
-        d.skip(end_len - end_off)?;
+        let unknown = d.skip(end_len - end_off)?.to_vec();    // TODO might always be empty?
 
         Ok(Self {
             header,
             is_interstellar,
             storage,
-            slots
+            slots,
+            unknown,
         })
     }
 
-    pub fn to_bp(&self, s: &mut Ser, struct_len: usize) -> anyhow::Result<()> {
+    // In bytes
+    pub fn bp_len(&self) -> usize {
+        Self::SLOTS_OFFSET + 12 * StationSlots::BYTE_LEN + self.unknown.len()
+    }
+
+    pub fn to_bp(&self, s: &mut Ser) -> anyhow::Result<()> {
         let len = s.len();
         let header_off = len + Self::HEADER_OFFSET;
         let slot_off = len + Self::SLOTS_OFFSET;
-        let struct_off = len + struct_len;
 
         for sto in &self.storage {
             s.write_type(sto);
@@ -102,11 +109,8 @@ impl Station {
             s.write_type(sl);
         }
 
-        let end_len = s.len();
-        if end_len > struct_off {
-            return Err(Error::E(format!("Unexpected station data length {} at write", struct_len)).into());
-        }
-        s.pad(struct_off - end_len);
+        s.append(&self.unknown);
+        
         Ok(())
     }
 }

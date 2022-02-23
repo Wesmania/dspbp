@@ -53,7 +53,7 @@ impl Ser {
         t.into_bytes(&mut din);
         self.0.append(&mut din);
     }
-
+    
     pub fn pad(&mut self, count: usize) {
         let l = self.0.len();
         self.0.resize(l + count, 0);

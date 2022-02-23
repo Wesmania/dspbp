@@ -5,6 +5,48 @@ use crate::serialize::{Deser, Ser};
 
 use super::{F32, station::Station, enums::DSPItem};
 
+#[derive(Serialize, Deserialize)]
+pub enum BuildingParam {
+    Station(Station),
+    Unknown(Vec<u32>),
+}
+
+impl BuildingParam {
+    pub fn from_bp(header: &BuildingHeader, d: &mut Deser) -> anyhow::Result<Self> {
+        if header.has_station() {
+            let station = Station::from_bp(d, header.has_interstellar(), header.parameter_count as usize * 4)?;
+            Ok(BuildingParam::Station(station))
+        } else {
+            let params: Vec<u32> = d.skip(header.parameter_count as usize * 4)?
+                .chunks_exact(4)
+                .map(|b| u32::from_le_bytes(b.try_into().unwrap()))
+                .collect();
+            Ok(BuildingParam::Unknown(params))
+        }
+    }
+
+    pub fn bp_len(&self) -> usize {
+        match self {
+            BuildingParam::Station(s) => s.bp_len(),
+            BuildingParam::Unknown(v) => v.len() * 4,
+        }
+    }
+
+    pub fn to_bp(&self, d: &mut Ser) -> anyhow::Result<()> {
+        match self {
+            Self::Station(s) => s.to_bp(d),
+            Self::Unknown(v) => {
+                let le32_vec: Vec<u8> = v
+                    .iter()
+                    .flat_map(|b| b.to_le_bytes().into_iter())
+                    .collect();
+                d.append(&le32_vec);
+                Ok(())
+            }
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, StructDeser)]
 pub struct BuildingHeader {
     #[le] index: u32,
@@ -35,8 +77,7 @@ pub struct BuildingHeader {
 #[derive(Serialize, Deserialize)]
 pub struct Building {
     header: BuildingHeader,
-    station: Option<Station>,
-    params: Vec<u32>,
+    param: BuildingParam,
 }
 
 impl BuildingHeader {
@@ -58,34 +99,15 @@ impl BuildingHeader {
 impl Building {
     pub fn from_bp(d: &mut Deser) -> anyhow::Result<Self> {
         let header: BuildingHeader = d.read_type()?;
-        let mut station = None;
-        let mut params: Vec<u32> = vec![];
-        if header.has_station() {
-            station = Some(Station::from_bp(d, header.has_interstellar(), header.parameter_count as usize * 4)?);
-        } else {
-            params.append(&mut d.skip(header.parameter_count as usize * 4)?
-                                     .chunks_exact(4)
-                                     .map(|b| u32::from_le_bytes(b.try_into().unwrap()))
-                                     .collect());
-        }
+        let param = BuildingParam::from_bp(&header, d)?;
         Ok(Self {
             header,
-            station,
-            params,
+            param,
         })
     }
 
     pub fn to_bp(&self, d: &mut Ser) -> anyhow::Result<()> {
         d.write_type(&self.header);
-        if self.station.is_some() {
-            self.station.as_ref().unwrap().to_bp(d, self.header.parameter_count as usize * 4)?;
-        } else {
-            let le32_vec: Vec<u8> = self.params
-                .iter()
-                .flat_map(|b| b.to_le_bytes().into_iter())
-                .collect();
-            d.append(&le32_vec);
-        }
-        Ok(())
+        self.param.to_bp(d)
     }
 }
