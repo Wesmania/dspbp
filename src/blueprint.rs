@@ -3,6 +3,8 @@ use std::io::{Read, Write};
 use std::str::FromStr;
 
 use crate::data::blueprint::BlueprintData;
+use crate::data::enums::{DSPItem, DSPRecipe};
+use crate::data::traits::{ReplaceItem, ReplaceRecipe, Replace};
 use crate::error::{some_error, Error};
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
@@ -156,5 +158,17 @@ impl Blueprint {
 
     pub fn dump_json(&self) -> anyhow::Result<Vec<u8>> {
         Ok(serde_json::to_vec(self)?)
+    }
+}
+
+impl ReplaceItem for Blueprint {
+    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
+        self.data.replace_item(replace)
+    }
+}
+
+impl ReplaceRecipe for Blueprint {
+    fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>) {
+        self.data.replace_recipe(replace)
     }
 }

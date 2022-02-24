@@ -1,6 +1,6 @@
-use num_enum::TryFromPrimitive;
+use num_enum::{TryFromPrimitive, IntoPrimitive};
 
-#[derive(TryFromPrimitive, PartialEq, Eq)]
+#[derive(TryFromPrimitive, IntoPrimitive, PartialEq, Eq, Clone, Copy)]
 #[repr(u16)]
 pub enum DSPItem {
     IronOre = 1001,
@@ -141,7 +141,7 @@ pub enum DSPItem {
     AccumulatorFull = 2207,
 }
 
-#[derive(TryFromPrimitive)]
+#[derive(TryFromPrimitive, IntoPrimitive, PartialEq, Eq, Clone, Copy)]
 #[repr(u16)]
 pub enum DSPRecipe {
     Gear = 5,

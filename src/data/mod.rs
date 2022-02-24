@@ -8,6 +8,7 @@ pub mod building;
 pub mod enums;
 pub mod station;
 pub mod vec;
+pub mod traits;
 
 // Because StructDeser isn't perfect
 #[derive(Serialize, Deserialize)]

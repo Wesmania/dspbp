@@ -3,6 +3,8 @@ use struct_deser_derive::StructDeser;
 
 use crate::serialize::{Deser, Ser};
 
+use super::{traits::{ReplaceItem, Replace}, enums::DSPItem};
+
 #[derive(Serialize, Deserialize, StructDeser)]
 pub struct Belt {
     #[le]
@@ -22,5 +24,11 @@ impl Belt {
 
     pub fn to_bp(&self, d: &mut Ser) {
         d.write_type(self)
+    }
+}
+
+impl ReplaceItem for Belt {
+    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
+        self.label.replace_item(replace)
     }
 }

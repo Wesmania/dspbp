@@ -7,7 +7,7 @@ use crate::{
     serialize::{Deser, Ser},
 };
 
-use super::vec::{from32le, to32le};
+use super::{vec::{from32le, to32le}, traits::{ReplaceItem, Replace}, enums::DSPItem};
 
 #[derive(Serialize, Deserialize, StructDeser)]
 pub struct StationHeader {
@@ -70,13 +70,21 @@ impl Station {
     const HEADER_OFFSET: usize = 128;
     const SLOTS_OFFSET: usize = 192;
 
+    fn storage_len(is_interstellar: bool) -> usize {
+        if is_interstellar {
+            5
+        } else {
+            3
+        }
+    }
+
     pub fn from_bp(
         d: &mut Deser,
         is_interstellar: bool,
         struct_len: usize,
     ) -> anyhow::Result<Self> {
         let slots_len = 12;
-        let storage_len = if is_interstellar { 5 } else { 3 };
+        let storage_len = Self::storage_len(is_interstellar);
 
         let mut storage = vec![];
         let mut slots = vec![];
@@ -142,5 +150,13 @@ impl Station {
         s.append(&from32le(&self.unknown));
 
         Ok(())
+    }
+}
+
+impl ReplaceItem for Station {
+    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
+        for item in &mut self.storage {
+            item.item_id.replace_item(replace)
+        }
     }
 }

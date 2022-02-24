@@ -7,6 +7,8 @@ use crate::{
     serialize::{Deser, Ser},
 };
 
+use super::{traits::{ReplaceItem, ReplaceRecipe, Replace}, enums::{DSPItem, DSPRecipe}};
+
 #[derive(Serialize, Deserialize, StructDeser)]
 pub struct Header {
     #[le]
@@ -84,5 +86,21 @@ impl BlueprintData {
         let mut w = Ser::new();
         self.to_bp(&mut w)?;
         Ok(w.data())
+    }
+}
+
+impl ReplaceItem for BlueprintData {
+    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
+        for building in &mut self.buildings {
+            building.replace_item(replace)
+        }
+    }
+}
+
+impl ReplaceRecipe for BlueprintData {
+    fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>) {
+        for building in &mut self.buildings {
+            building.replace_recipe(replace)
+        }
     }
 }

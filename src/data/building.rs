@@ -5,10 +5,10 @@ use crate::serialize::{Deser, Ser};
 
 use super::{
     belt::Belt,
-    enums::DSPItem,
+    enums::{DSPItem, DSPRecipe},
     station::Station,
     vec::{from32le, to32le},
-    F32,
+    F32, traits::{ReplaceItem, ReplaceRecipe, Replace},
 };
 
 #[derive(Serialize, Deserialize)]
@@ -59,6 +59,17 @@ impl BuildingParam {
                 Ok(())
             }
         }
+    }
+}
+
+impl ReplaceItem for BuildingParam {
+    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
+        let rep: &mut dyn ReplaceItem = match self {
+            Self::Station(s) => s,
+            Self::Belt(Some(b)) => b,
+            _ => return,
+        };
+        rep.replace_item(replace)
     }
 }
 
@@ -146,5 +157,18 @@ impl Building {
     pub fn to_bp(&self, d: &mut Ser) -> anyhow::Result<()> {
         d.write_type(&self.header);
         self.param.to_bp(d)
+    }
+}
+
+impl ReplaceItem for Building {
+    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
+        self.header.item_id.replace_item(replace);
+        self.param.replace_item(replace);
+    }
+}
+
+impl ReplaceRecipe for Building {
+    fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>) {
+        self.header.recipe_id.replace_recipe(replace)
     }
 }
