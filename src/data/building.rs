@@ -3,7 +3,7 @@ use std::io::{Read, Write};
 use serde::{Deserialize, Serialize};
 use struct_deser_derive::StructDeser;
 
-use crate::{serialize::{ReadType, WriteType}, error::some_error};
+use crate::{serialize::{ReadType, WriteType}, error::some_error, stats::{GetStats, Stats}};
 
 use super::{
     belt::Belt,
@@ -177,5 +177,19 @@ impl ReplaceItem for Building {
 impl ReplaceRecipe for Building {
     fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>) {
         self.header.recipe_id.replace_recipe(replace)
+    }
+}
+
+impl GetStats for Building {
+    fn get_stats(&self, stats: &mut Stats) {
+        if let Ok(b) = self.header.item_id.try_into() {
+            stats.add_building(b);
+        }
+        if let Ok(b) = self.header.recipe_id.try_into() {
+            stats.add_recipe(b);
+        }
+        if let BuildingParam::Station(s) = &self.param {
+            s.get_stats(stats);
+        }
     }
 }

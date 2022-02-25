@@ -5,7 +5,7 @@ use struct_deser_derive::StructDeser;
 
 use crate::{
     data::{area::Area, building::Building},
-    error::Error, serialize::{ReadType, WriteType},
+    error::Error, serialize::{ReadType, WriteType}, stats::{GetStats, Stats},
 };
 
 use super::{traits::{ReplaceItem, ReplaceRecipe, Replace}, enums::{DSPItem, DSPRecipe}};
@@ -92,6 +92,14 @@ impl ReplaceRecipe for BlueprintData {
     fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>) {
         for building in &mut self.buildings {
             building.replace_recipe(replace)
+        }
+    }
+}
+
+impl GetStats for BlueprintData {
+    fn get_stats(&self, stats: &mut Stats) {
+        for building in &self.buildings {
+            building.get_stats(stats)
         }
     }
 }

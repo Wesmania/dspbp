@@ -6,6 +6,7 @@ use crate::data::blueprint::BlueprintData;
 use crate::data::enums::{DSPItem, DSPRecipe};
 use crate::data::traits::{ReplaceItem, ReplaceRecipe, Replace};
 use crate::error::{some_error, Error};
+use crate::stats::{GetStats, Stats};
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use flate2::Compression;
@@ -171,5 +172,11 @@ impl ReplaceItem for Blueprint {
 impl ReplaceRecipe for Blueprint {
     fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>) {
         self.data.replace_recipe(replace)
+    }
+}
+
+impl GetStats for Blueprint {
+    fn get_stats(&self, stats: &mut Stats) {
+        self.data.get_stats(stats)
     }
 }

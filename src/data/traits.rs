@@ -4,13 +4,11 @@ use strum::ParseError;
 
 use super::enums::{DSPItem, DSPRecipe};
 
-pub type Replace<T> = dyn Fn(T) -> T;
-
-// Evil generics. I want to convert u16/u32 to enums without repeating myself.
-pub trait DSPEnum: Eq + Copy + Hash + for<'a> TryFrom<&'a str, Error = ParseError> + TryFrom<Self::Underlying> + Into<Self::Underlying> {
+pub trait DSPEnum: Eq + Copy + Hash + for<'a> TryFrom<&'a str, Error = ParseError> +
+                   TryFrom<Self::Underlying> + Into<Self::Underlying>
+{
     type Underlying: Copy;
 }
-
 impl DSPEnum for DSPRecipe {
     type Underlying = u16;
 }
@@ -18,56 +16,55 @@ impl DSPEnum for DSPItem {
     type Underlying = u16;
 }
 
-// Can't use DSPEnum twice with disjoint types as params, so here's a workaround
-pub trait DSPEnumSpec<Underlying: Copy>: Eq + Copy + TryFrom<Underlying> + Into<Underlying> {}
-impl<T: DSPEnum> DSPEnumSpec<T::Underlying> for T {}
+pub type Replace<T> = dyn Fn(T) -> T;
 
-pub trait ReplaceEnum<Underlying: Copy, Enum: DSPEnumSpec<Underlying>> {
-    fn replace_enum(&mut self, replace: &Replace<Enum>);
-}
-
-impl<Underlying: Copy, Enum: DSPEnumSpec<Underlying>> ReplaceEnum<Underlying, Enum> for Underlying {
-    fn replace_enum(&mut self, replace: &Replace<Enum>) {
-        match Enum::try_from(*self) {
-            Err(_) => return,
-            Ok(e) => {
-                *self = replace(e).into();
-            }
-        }
-    }
-}
-
-impl <Enum: DSPEnumSpec<u16>> ReplaceEnum<u16, Enum> for u32 {
-    fn replace_enum(&mut self, replace: &Replace<Enum>) {
-        let mut label_u16 = match u16::try_from(*self) {
-            Ok(l) => l,
-            _ => return,
-        };
-        label_u16.replace_enum(replace);
-        *self = label_u16 as u32;
-    }
+pub trait ReplaceRecipe {
+    fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>);
 }
 
 pub trait ReplaceItem {
     fn replace_item(&mut self, replace: &Replace<DSPItem>);
 }
 
-impl<Type> ReplaceItem for Type where
-    Type: ReplaceEnum<u16, DSPItem>,
-{
-    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
-        self.replace_enum(replace)
+macro_rules! from_into_boilerplate {
+    ($t: ty, $ul: ty, $enum: ty) => {
+        impl From<$enum> for $t {
+            fn from(i: $enum) -> Self {
+                <$ul>::from(i) as $t
+            }
+        }
+
+        impl TryInto<$enum> for $t {
+            type Error = anyhow::Error;
+
+            fn try_into(self) -> Result<$enum, Self::Error> {
+                Ok(<$ul>::try_from(self)?.try_into()?)
+            }
+        }
     }
 }
 
-pub trait ReplaceRecipe {
-    fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>);
+from_into_boilerplate!(u32, u16, DSPItem);
+from_into_boilerplate!(u32, u16, DSPRecipe);
+
+impl<T: TryInto<DSPItem> + From<DSPItem> + Copy> ReplaceItem for T
+{
+    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
+        let my_item = match (*self).try_into() {
+            Ok(l) => l,
+            _ => return,
+        };
+        *self = replace(my_item).into();
+    }
 }
 
-impl<Type> ReplaceRecipe for Type where
-    Type: ReplaceEnum<u16, DSPRecipe>,
+impl<T: TryInto<DSPRecipe> + From<DSPRecipe> + Copy> ReplaceRecipe for T
 {
     fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>) {
-        self.replace_enum(replace)
+        let my_item = match (*self).try_into() {
+            Ok(l) => l,
+            _ => return,
+        };
+        *self = replace(my_item).into();
     }
 }

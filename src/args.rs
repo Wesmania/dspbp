@@ -31,4 +31,6 @@ pub enum Commands {
     Undump,
     /// Edit blueprint.
     Edit,
+    /// Print some blueprint info.
+    Info,
 }

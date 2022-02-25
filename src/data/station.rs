@@ -5,7 +5,7 @@ use struct_deser::SerializedByteLen;
 use struct_deser_derive::StructDeser;
 
 use crate::{
-    error::Error, serialize::{ReadType, WriteType},
+    error::Error, serialize::{ReadType, WriteType}, stats::{GetStats, Stats},
 };
 
 use super::{vec::{from32le, to32le}, traits::{ReplaceItem, Replace}, enums::DSPItem};
@@ -165,6 +165,16 @@ impl ReplaceItem for Station {
     fn replace_item(&mut self, replace: &Replace<DSPItem>) {
         for item in &mut self.storage {
             item.item_id.replace_item(replace)
+        }
+    }
+}
+
+impl GetStats for Station {
+    fn get_stats(&self, stats: &mut Stats) {
+        for s in &self.storage {
+            if let Ok(b) = s.item_id.try_into() {
+                stats.add_station_ware(b);
+            }
         }
     }
 }

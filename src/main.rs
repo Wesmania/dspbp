@@ -6,12 +6,15 @@ use error::some_error;
 use strum::ParseError;
 use std::{io::{Read, Write}, collections::HashMap};
 
+use crate::stats::{Stats, GetStats};
+
 mod args;
 mod blueprint;
 mod data;
 mod error;
 mod md5;
 mod serialize;
+mod stats;
 
 fn iof(arg: &Option<String>) -> Option<&str> {
     match arg.as_ref().map(|x| x.as_ref()) {
@@ -96,6 +99,12 @@ fn main() -> anyhow::Result<()> {
                 bp.replace_recipe(&replace);
             }
             output.write_all(bp.into_bp_string()?.as_bytes())?;
+        }
+        Commands::Info => {
+            let bp = itob(&mut input)?;
+            let mut stats = Stats::new();
+            bp.get_stats(&mut stats);
+            print!("{}", stats);
         }
     }
     Ok(())
