@@ -1,6 +1,7 @@
 use num_enum::{TryFromPrimitive, IntoPrimitive};
+use strum::EnumString;
 
-#[derive(TryFromPrimitive, IntoPrimitive, PartialEq, Eq, Clone, Copy)]
+#[derive(TryFromPrimitive, IntoPrimitive, EnumString, PartialEq, Eq, Clone, Copy, Hash)]
 #[repr(u16)]
 pub enum DSPItem {
     IronOre = 1001,
@@ -141,7 +142,7 @@ pub enum DSPItem {
     AccumulatorFull = 2207,
 }
 
-#[derive(TryFromPrimitive, IntoPrimitive, PartialEq, Eq, Clone, Copy)]
+#[derive(TryFromPrimitive, IntoPrimitive, EnumString, PartialEq, Eq, Clone, Copy, Hash)]
 #[repr(u16)]
 pub enum DSPRecipe {
     Gear = 5,

@@ -1,9 +1,13 @@
+use std::hash::Hash;
+
+use strum::ParseError;
+
 use super::enums::{DSPItem, DSPRecipe};
 
 pub type Replace<T> = dyn Fn(T) -> T;
 
 // Evil generics. I want to convert u16/u32 to enums without repeating myself.
-pub trait DSPEnum: Eq + Copy + TryFrom<Self::Underlying> + Into<Self::Underlying> {
+pub trait DSPEnum: Eq + Copy + Hash + for<'a> TryFrom<&'a str, Error = ParseError> + TryFrom<Self::Underlying> + Into<Self::Underlying> {
     type Underlying: Copy;
 }
 
