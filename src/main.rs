@@ -73,10 +73,6 @@ fn main() -> anyhow::Result<()> {
     };
 
     match args.command {
-        Commands::Parse => {
-            let bp = itob(&mut input)?;
-            output.write_all(bp.into_bp_string()?.as_bytes())?;
-        }
         Commands::Dump => {
             let bp = itob(&mut input)?;
             output.write_all(&bp.dump_json()?)?;

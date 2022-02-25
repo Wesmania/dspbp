@@ -26,7 +26,6 @@ pub struct Args {
 pub enum Commands {
     /// Dump blueprint to JSON.
     Dump,
-    Parse,
     /// Undump blueprint from JSON to blueprint format.
     Undump,
     /// Edit blueprint.
