@@ -37,7 +37,7 @@ impl Blueprint {
         let mut data = vec![];
         d.read_to_end(&mut data)?;
 
-        BlueprintData::new_from_buf(&data)
+        BlueprintData::from_bp(&mut &data[..])
     }
 
     fn hash_str_to_hash(d: &str) -> anyhow::Result<MD5Hash> {
@@ -62,7 +62,8 @@ impl Blueprint {
 
     fn pack_data(&self) -> anyhow::Result<String> {
         let mut e = GzEncoder::new(Vec::new(), Compression::default());
-        let data = self.data.write()?;
+        let mut data = vec![];
+        self.data.to_bp(&mut data)?;
         e.write_all(&data).unwrap();
         let gzipped_data = e.finish().unwrap();
         Ok(base64::encode(gzipped_data.as_slice()))

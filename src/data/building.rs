@@ -1,7 +1,9 @@
+use std::io::{Read, Write};
+
 use serde::{Deserialize, Serialize};
 use struct_deser_derive::StructDeser;
 
-use crate::serialize::{Deser, Ser};
+use crate::{serialize::{ReadType, WriteType}, error::some_error};
 
 use super::{
     belt::Belt,
@@ -19,7 +21,10 @@ pub enum BuildingParam {
 }
 
 impl BuildingParam {
-    pub fn from_bp(header: &BuildingHeader, d: &mut Deser) -> anyhow::Result<Self> {
+    pub fn from_bp(header: &BuildingHeader, d: &mut dyn Read) -> anyhow::Result<Self> {
+        if header.parameter_count > 32768 { // Just so we don't allocate a crapton of memory
+            return Err(some_error(format!("Parameter count too large: {}", header.parameter_count)).into())
+        }
         if header.has_station() {
             let station = Station::from_bp(
                 d,
@@ -35,7 +40,9 @@ impl BuildingParam {
             };
             Ok(BuildingParam::Belt(belt))
         } else {
-            let params: Vec<u32> = to32le(d.skip(header.parameter_count as usize * 4)?);
+            let mut read = vec![0u8; header.parameter_count as usize * 4];
+            d.read_exact(&mut read)?;
+            let params: Vec<u32> = to32le(read);
             Ok(BuildingParam::Unknown(params))
         }
     }
@@ -49,13 +56,13 @@ impl BuildingParam {
         }
     }
 
-    pub fn to_bp(&self, d: &mut Ser) -> anyhow::Result<()> {
+    pub fn to_bp(&self, d: &mut dyn Write) -> anyhow::Result<()> {
         match self {
             Self::Station(s) => s.to_bp(d),
-            Self::Belt(Some(b)) => Ok(b.to_bp(d)),
+            Self::Belt(Some(b)) => b.to_bp(d),
             Self::Belt(None) => Ok(()),
             Self::Unknown(v) => {
-                d.append(&from32le(v));
+                d.write(&from32le(v))?;
                 Ok(())
             }
         }
@@ -148,14 +155,14 @@ impl BuildingHeader {
 }
 
 impl Building {
-    pub fn from_bp(d: &mut Deser) -> anyhow::Result<Self> {
+    pub fn from_bp(mut d: &mut dyn Read) -> anyhow::Result<Self> {
         let header: BuildingHeader = d.read_type()?;
         let param = BuildingParam::from_bp(&header, d)?;
         Ok(Self { header, param })
     }
 
-    pub fn to_bp(&self, d: &mut Ser) -> anyhow::Result<()> {
-        d.write_type(&self.header);
+    pub fn to_bp(&self, mut d: &mut dyn Write) -> anyhow::Result<()> {
+        d.write_type(&self.header)?;
         self.param.to_bp(d)
     }
 }

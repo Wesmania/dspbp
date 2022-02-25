@@ -1,10 +1,11 @@
+use std::io::{Read, Write};
+
 use serde::{Deserialize, Serialize};
 use struct_deser::SerializedByteLen;
 use struct_deser_derive::StructDeser;
 
 use crate::{
-    error::Error,
-    serialize::{Deser, Ser},
+    error::Error, serialize::{ReadType, WriteType},
 };
 
 use super::{vec::{from32le, to32le}, traits::{ReplaceItem, Replace}, enums::DSPItem};
@@ -79,7 +80,7 @@ impl Station {
     }
 
     pub fn from_bp(
-        d: &mut Deser,
+        mut d: &mut dyn Read,
         is_interstellar: bool,
         struct_len: usize,
     ) -> anyhow::Result<Self> {
@@ -89,32 +90,36 @@ impl Station {
         let mut storage = vec![];
         let mut slots = vec![];
 
-        let start_len = d.len();
-        let header_off = start_len - Self::HEADER_OFFSET;
-        let slot_off = start_len - Self::SLOTS_OFFSET;
-        let end_off = start_len - struct_len;
+        let mut read = 0;
 
         for _ in 0..storage_len {
             storage.push(d.read_type()?);
+            read += StationStorage::BYTE_LEN;
         }
-        d.skip(d.len() - header_off)?;
+
+        d.skip(Self::HEADER_OFFSET - read)?;
+        read = Self::HEADER_OFFSET;
 
         let header = d.read_type()?;
+        read += StationHeader::BYTE_LEN;
 
-        d.skip(d.len() - slot_off)?;
+        d.skip(Self::SLOTS_OFFSET - read)?;
+        read = Self::SLOTS_OFFSET;
         for _ in 0..slots_len {
             slots.push(d.read_type()?);
+            read += StationSlots::BYTE_LEN;
         }
 
-        let end_len = d.len();
-        if end_len < end_off {
+        if struct_len < read {
             return Err(Error::E(format!(
                 "Unexpected station data length {} at read",
-                struct_len
+                read
             ))
             .into());
         }
-        let unknown = to32le(d.skip(end_len - end_off)?); // TODO might always be empty?
+        let mut rest = vec![0u8; struct_len - read];
+        d.read_exact(&mut rest)?;
+        let unknown = to32le(&rest); // TODO might always be empty?
 
         Ok(Self {
             header,
@@ -130,24 +135,27 @@ impl Station {
         Self::SLOTS_OFFSET + 12 * StationSlots::BYTE_LEN + self.unknown.len()
     }
 
-    pub fn to_bp(&self, s: &mut Ser) -> anyhow::Result<()> {
-        let len = s.len();
-        let header_off = len + Self::HEADER_OFFSET;
-        let slot_off = len + Self::SLOTS_OFFSET;
+    pub fn to_bp(&self, mut s: &mut dyn Write) -> anyhow::Result<()> {
+        let mut written = 0;
 
         for sto in &self.storage {
-            s.write_type(sto);
+            s.write_type(sto)?;
+            written += StationStorage::BYTE_LEN;
         }
-        s.pad(header_off - s.len());
+        s.pad(Self::HEADER_OFFSET - written)?;
+        written = Self::HEADER_OFFSET;
 
-        s.write_type(&self.header);
-        s.pad(slot_off - s.len());
+        s.write_type(&self.header)?;
+        written += StationHeader::BYTE_LEN;
+
+        s.pad(Self::SLOTS_OFFSET - written)?;
+        // written = Self::SLOTS_OFFSET;
 
         for sl in &self.slots {
-            s.write_type(sl);
+            s.write_type(sl)?;
         }
 
-        s.append(&from32le(&self.unknown));
+        s.write_all(&from32le(&self.unknown))?;
 
         Ok(())
     }

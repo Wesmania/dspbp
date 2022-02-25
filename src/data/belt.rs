@@ -1,7 +1,9 @@
+use std::io::{Read, Write};
+
 use serde::{Deserialize, Serialize};
 use struct_deser_derive::StructDeser;
 
-use crate::serialize::{Deser, Ser};
+use crate::serialize::{ReadType, WriteType};
 
 use super::{traits::{ReplaceItem, Replace}, enums::DSPItem};
 
@@ -14,7 +16,7 @@ pub struct Belt {
 }
 
 impl Belt {
-    pub fn from_bp(d: &mut Deser) -> anyhow::Result<Self> {
+    pub fn from_bp(mut d: &mut dyn Read) -> anyhow::Result<Self> {
         d.read_type().map_err(|e| e.into())
     }
 
@@ -22,7 +24,7 @@ impl Belt {
         8
     }
 
-    pub fn to_bp(&self, d: &mut Ser) {
+    pub fn to_bp(&self, mut d: &mut dyn Write) -> anyhow::Result<()> {
         d.write_type(self)
     }
 }

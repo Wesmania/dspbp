@@ -1,65 +1,50 @@
+use std::io::{Write, Read};
+
 use struct_deser::{FromBytes, IntoBytes};
 
-use crate::error::Error;
+pub trait ReadType {
+    fn read_type<T: FromBytes>(&mut self) -> anyhow::Result<T>;
+    fn skip(&mut self, count: usize) -> anyhow::Result<()>;
+}
 
-pub struct Deser<'a>(&'a [u8]);
+pub trait WriteType {
+    fn write_type<T: IntoBytes>(&mut self, t: &T) -> anyhow::Result<()>;
+    fn pad(&mut self, count: usize) -> anyhow::Result<()>;
+}
 
-impl<'a> Deser<'a> {
-    pub fn new(input: &'a [u8]) -> Self {
-        Self(input)
+impl<R: Read> ReadType for R {
+    fn read_type<T: FromBytes>(&mut self) -> anyhow::Result<T> {
+        let mut data = vec![0u8; T::BYTE_LEN];
+        self.read_exact(&mut data)?;
+        Ok(T::from_bytes(&data))
     }
 
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn read_type<T: FromBytes>(&mut self) -> Result<T, Error> {
-        if self.0.len() < T::BYTE_LEN {
-            Err(Error::E("Input too short".into()))
-        } else {
-            let res = T::from_bytes(&self.0[..T::BYTE_LEN]);
-            self.0 = &self.0[T::BYTE_LEN..];
-            Ok(res)
+    fn skip(&mut self, mut count: usize) -> anyhow::Result<()> {
+        let buf = &mut [0u8; 64];
+        while count > 0 {
+            let d = std::cmp::min(count, 64);
+            self.read_exact(&mut buf[..d])?;
+            count -= d;
         }
-    }
-
-    pub fn skip(&mut self, n: usize) -> Result<&[u8], Error> {
-        if self.0.len() < n {
-            Err(Error::E("Input too short".into()))
-        } else {
-            let ret = &self.0[..n];
-            self.0 = &self.0[n..];
-            Ok(ret)
-        }
+        Ok(())
     }
 }
 
-pub struct Ser(Vec<u8>);
-impl Ser {
-    pub fn new() -> Self {
-        Self(vec![])
-    }
-
-    pub fn data(self) -> Vec<u8> {
-        self.0
-    }
-
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn write_type<T: IntoBytes>(&mut self, t: &T) {
+impl<W: Write> WriteType for W {
+    fn write_type<T: IntoBytes>(&mut self, t: &T) -> anyhow::Result<()> {
         let mut din = vec![0; T::BYTE_LEN];
         t.into_bytes(&mut din);
-        self.0.append(&mut din);
+        self.write_all(&mut din)?;
+        Ok(())
     }
 
-    pub fn pad(&mut self, count: usize) {
-        let l = self.0.len();
-        self.0.resize(l + count, 0);
-    }
-
-    pub fn append(&mut self, data: &[u8]) {
-        self.0.extend_from_slice(data);
+    fn pad(&mut self, mut count: usize) -> anyhow::Result<()> {
+        let buf = &mut [0u8; 64];
+        while count > 0 {
+            let d = std::cmp::min(count, 64);
+            self.write_all(&mut buf[..d])?;
+            count -= d;
+        }
+        Ok(())
     }
 }

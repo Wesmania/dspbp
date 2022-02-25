@@ -1,10 +1,11 @@
+use std::io::{Read, Write};
+
 use serde::{Deserialize, Serialize};
 use struct_deser_derive::StructDeser;
 
 use crate::{
     data::{area::Area, building::Building},
-    error::Error,
-    serialize::{Deser, Ser},
+    error::Error, serialize::{ReadType, WriteType},
 };
 
 use super::{traits::{ReplaceItem, ReplaceRecipe, Replace}, enums::{DSPItem, DSPRecipe}};
@@ -40,7 +41,7 @@ pub struct BlueprintData {
 }
 
 impl BlueprintData {
-    fn from_bp(d: &mut Deser) -> anyhow::Result<Self> {
+    pub fn from_bp(mut d: &mut dyn Read) -> anyhow::Result<Self> {
         let header: Header = d.read_type()?;
         if header.version != 1 {
             return Err(Error::E(format!(
@@ -66,26 +67,16 @@ impl BlueprintData {
         })
     }
 
-    fn to_bp(&self, d: &mut Ser) -> anyhow::Result<()> {
-        d.write_type(&self.header);
+    pub fn to_bp(&self, mut d: &mut dyn Write) -> anyhow::Result<()> {
+        d.write_type(&self.header)?;
         for a in &self.areas {
-            d.write_type(a);
+            d.write_type(a)?;
         }
-        d.write_type(&self.building_count);
+        d.write_type(&self.building_count)?;
         for b in &self.buildings {
             b.to_bp(d)?;
         }
         Ok(())
-    }
-
-    pub fn new_from_buf(b: &[u8]) -> anyhow::Result<Self> {
-        Self::from_bp(&mut Deser::new(b))
-    }
-
-    pub fn write(&self) -> anyhow::Result<Vec<u8>> {
-        let mut w = Ser::new();
-        self.to_bp(&mut w)?;
-        Ok(w.data())
     }
 }
 
