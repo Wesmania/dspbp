@@ -3,7 +3,7 @@ use blueprint::Blueprint;
 use clap::StructOpt;
 use data::{traits::{DSPEnum, Replace, ReplaceItem, ReplaceRecipe}, enums::{DSPItem, DSPRecipe}};
 use error::some_error;
-use strum::ParseError;
+use strum::{ParseError, IntoEnumIterator};
 use std::{io::{Read, Write}, collections::HashMap};
 
 use crate::stats::{Stats, GetStats};
@@ -101,6 +101,16 @@ fn main() -> anyhow::Result<()> {
             let mut stats = Stats::new();
             bp.get_stats(&mut stats);
             print!("{}", stats);
+        }
+        Commands::Items => {
+            for e in DSPItem::iter() {
+                println!("{}", e.as_ref())
+            }
+        }
+        Commands::Recipes => {
+            for e in DSPRecipe::iter() {
+                println!("{}", e.as_ref())
+            }
         }
     }
     Ok(())

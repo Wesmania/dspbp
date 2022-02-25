@@ -32,4 +32,8 @@ pub enum Commands {
     Edit,
     /// Print some blueprint info.
     Info,
+    /// Print item names.
+    Items,
+    /// Print recipe names.
+    Recipes,
 }
