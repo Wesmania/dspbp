@@ -1,6 +1,8 @@
 use std::io::{Read, Write};
 
+#[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
+
 use struct_deser_derive::StructDeser;
 
 use crate::{
@@ -10,7 +12,8 @@ use crate::{
 
 use super::{traits::{ReplaceItem, ReplaceRecipe, Replace}, enums::{DSPItem, DSPRecipe}};
 
-#[derive(Serialize, Deserialize, StructDeser)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
+#[derive(StructDeser)]
 pub struct Header {
     #[le]
     version: u32,
@@ -29,10 +32,11 @@ pub struct Header {
     area_count: u8,
 }
 
-#[derive(Serialize, Deserialize, StructDeser)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
+#[derive(StructDeser)]
 pub struct BuildingCount(#[le] u32);
 
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 pub struct BlueprintData {
     header: Header,
     areas: Vec<Area>,

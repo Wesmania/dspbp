@@ -1,5 +1,6 @@
 use std::io::{Read, Write};
 
+#[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 use struct_deser_derive::StructDeser;
 
@@ -7,7 +8,8 @@ use crate::serialize::{ReadType, WriteType};
 
 use super::{traits::{ReplaceItem, Replace}, enums::DSPItem};
 
-#[derive(Serialize, Deserialize, StructDeser)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
+#[derive(StructDeser)]
 pub struct Belt {
     #[le]
     label: u32,

@@ -10,6 +10,7 @@ impl<T: Into<String>> From<T> for Error {
     }
 }
 
+#[cfg(feature = "dump")]
 impl serde::ser::Error for Error {
     fn custom<T>(msg: T) -> Self
     where
@@ -19,6 +20,7 @@ impl serde::ser::Error for Error {
     }
 }
 
+#[cfg(feature = "dump")]
 impl serde::de::Error for Error {
     fn custom<T>(msg: T) -> Self
     where

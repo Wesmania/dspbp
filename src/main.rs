@@ -73,10 +73,12 @@ fn main() -> anyhow::Result<()> {
     };
 
     match args.command {
+        #[cfg(feature = "dump")]
         Commands::Dump => {
             let bp = itob(&mut input)?;
             output.write_all(&bp.dump_json()?)?;
         }
+        #[cfg(feature = "dump")]
         Commands::Undump => {
             let mut data = vec![];
             input.read_to_end(&mut data)?;

@@ -10,11 +10,12 @@ use crate::stats::{GetStats, Stats};
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use flate2::Compression;
+#[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
 use crate::md5::{Algo, MD5Hash, MD5};
 
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 pub struct Blueprint {
     layout: u32,
     icons: [u32; 5],
@@ -154,10 +155,12 @@ impl Blueprint {
         Ok(out)
     }
 
+    #[cfg(feature = "dump")]
     pub fn new_from_json(json: &str) -> anyhow::Result<Self> {
         Ok(serde_json::from_str(json)?)
     }
 
+    #[cfg(feature = "dump")]
     pub fn dump_json(&self) -> anyhow::Result<Vec<u8>> {
         Ok(serde_json::to_vec(self)?)
     }

@@ -1,7 +1,9 @@
+#[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 use struct_deser_derive::StructDeser;
 
-#[derive(Serialize, Deserialize, StructDeser)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
+#[derive(StructDeser)]
 pub struct Area {
     index: i8,
     parent_index: i8,

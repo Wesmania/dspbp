@@ -1,5 +1,6 @@
 use std::io::{Read, Write};
 
+#[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 use struct_deser::SerializedByteLen;
 use struct_deser_derive::StructDeser;
@@ -10,7 +11,8 @@ use crate::{
 
 use super::{vec::{from32le, to32le}, traits::{ReplaceItem, Replace}, enums::DSPItem};
 
-#[derive(Serialize, Deserialize, StructDeser)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
+#[derive(StructDeser)]
 pub struct StationHeader {
     #[le]
     work_energy: u32,
@@ -30,7 +32,8 @@ pub struct StationHeader {
     vessel_count: u32,
 }
 
-#[derive(Serialize, Deserialize, StructDeser)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
+#[derive(StructDeser)]
 pub struct StationSlots {
     #[le]
     direction: u32,
@@ -42,7 +45,8 @@ pub struct StationSlots {
     _unused2: u32,
 }
 
-#[derive(Serialize, Deserialize, StructDeser)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
+#[derive(StructDeser)]
 pub struct StationStorage {
     #[le]
     item_id: u32,
@@ -58,7 +62,7 @@ pub struct StationStorage {
     _unused2: u32,
 }
 
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 pub struct Station {
     header: StationHeader,
     is_interstellar: bool,

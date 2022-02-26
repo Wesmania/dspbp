@@ -1,5 +1,6 @@
 use std::io::{Read, Write};
 
+#[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 use struct_deser_derive::StructDeser;
 
@@ -13,7 +14,7 @@ use super::{
     F32, traits::{ReplaceItem, ReplaceRecipe, Replace},
 };
 
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 pub enum BuildingParam {
     Station(Station),
     Belt(Option<Belt>),
@@ -80,7 +81,8 @@ impl ReplaceItem for BuildingParam {
     }
 }
 
-#[derive(Serialize, Deserialize, StructDeser)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
+#[derive(StructDeser)]
 pub struct BuildingHeader {
     #[le]
     index: u32,
@@ -123,7 +125,7 @@ pub struct BuildingHeader {
     parameter_count: u16,
 }
 
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 pub struct Building {
     header: BuildingHeader,
     param: BuildingParam,

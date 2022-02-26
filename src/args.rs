@@ -25,8 +25,10 @@ pub struct Args {
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// Dump blueprint to JSON.
+    #[cfg(feature = "dump")]
     Dump,
     /// Undump blueprint from JSON to blueprint format.
+    #[cfg(feature = "dump")]
     Undump,
     /// Edit blueprint.
     Edit,

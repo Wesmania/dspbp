@@ -1,3 +1,4 @@
+#[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 use struct_deser::{FromBytesOrdered, IntoBytesOrdered, SerializedByteLen};
 
@@ -11,7 +12,7 @@ pub mod vec;
 pub mod traits;
 
 // Because StructDeser isn't perfect
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 struct F32(f32);
 
 impl SerializedByteLen for F32 {

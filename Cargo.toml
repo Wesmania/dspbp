@@ -3,8 +3,6 @@ name = "dspbp"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 clap = { version = "*", features = ["derive"] }
 flate2 = "*"
@@ -12,9 +10,13 @@ base64 = "*"
 anyhow = "*"
 thiserror = "*"
 lazy_static = "*"
-serde = { version = "*", features = ["derive"] }
+serde = { version = "*", features = ["derive"], optional = true}
 struct_deser = "*"
 struct_deser-derive = "*"
 num_enum = "*"
-serde_json = "*"
+serde_json = {version = "*", optional = true }
 strum = { version = "*", features = ["derive"] }
+
+[features]
+default = ["dump"]
+dump = ["serde", "serde_json"]
