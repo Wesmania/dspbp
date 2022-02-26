@@ -1,0 +1,43 @@
+# vim: et:ts=4:sts=4:sw=4
+name: Release
+on:
+    release:
+        types: [published]
+
+jobs:
+    publish:
+        name: Publish for ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                name: [
+                    linux,
+                    windows,
+                ]
+            include:
+                - name: linux
+                  os: ubuntu-latest
+                  artifact_name: target/release/dspbp
+                  asset_name: dspbp
+                - name: windows
+                  os: windows-latest
+                  artifact_name: target/release/dspbp.exe
+                  asset_name: dspbp.exe
+
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+            - name: Build
+              run: cargo build --release
+            - name: Upload
+              uses: svenstaro/upload-release-action@v2
+              with:
+                  repo_token: ${{ secrets.GITHUB_TOKEN }}
+                  file: ${{ matrix.artifact_name }}
+                  asset_name: ${{ matrix.asset_name }}
+                  tag: ${{ github.ref }}
+                  overwrite: true
+                  body: Binary for ${{ matrix.os }}
