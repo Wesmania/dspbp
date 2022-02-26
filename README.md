@@ -6,22 +6,21 @@ Features:
 * Print blueprint info.
 * Replace items/recipes (partial).
 
-## Building on linux
-
-* Install rust and cargo.
-* Run `cargo build`.
-* Your binary is in `target/debug/dspbp`.
-
-## Building on Windows
-
-I dunno. I'm lazy.
-
 ## Binary releases
 
-I dunno for now. I'm lazy.
+Check the Releases tab. For Windows, grab `dspbp.exe`. For linux, `dspbp`.
 
 ## Usage
 
+Windows users: dspbp is a commandline tool. To use it do the following:
+* Start powershell.
+* Navigate to where you downloaded dspbp. If it's your Downloads folder, run this:
+  ```
+  cd $HOME\Downloads
+  ```
+* Run `./dspbp.exe help`, go from there.
+
+Linux users: same deal, but you probably already know how to use the terminal.
 Start with `dspbp help`, go from there.
 
 ## Acknowledgements
@@ -33,7 +32,6 @@ Start with `dspbp help`, go from there.
 
 ## TODOs
 
-* Binary releases.
 * Better support for replacing things:
   * Belt labels!
   * Inserter / splitter filters!
@@ -41,3 +39,4 @@ Start with `dspbp help`, go from there.
 * Changing blueprint info like description and icons.
 * Prettier error handling, eventually.
 * More blueprint edit actions, maybe?
+* A library interface. Maybe someone will want to use it as wasm?
