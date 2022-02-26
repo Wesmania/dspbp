@@ -10,19 +10,15 @@ jobs:
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
-                name: [
-                    linux,
-                    windows,
-                ]
-            include:
-                - name: linux
-                  os: ubuntu-latest
-                  artifact_name: target/release/dspbp
-                  asset_name: dspbp
-                - name: windows
-                  os: windows-latest
-                  artifact_name: target/release/dspbp.exe
-                  asset_name: dspbp.exe
+                include:
+                    - name: linux
+                      os: ubuntu-latest
+                      artifact_name: target/release/dspbp
+                      asset_name: dspbp
+                    - name: windows
+                      os: windows-latest
+                      artifact_name: target/release/dspbp.exe
+                      asset_name: dspbp.exe
 
         steps:
             - uses: actions/checkout@v2
