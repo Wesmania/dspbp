@@ -1,17 +1,17 @@
-use std::io::{Read, Write};
+use std::io::{Cursor, Write};
 
+use binrw::{BinWrite, BinRead, BinReaderExt};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
-use struct_deser_derive::StructDeser;
 
-use crate::{serialize::{ReadType, WriteType}, error::some_error, stats::{GetStats, Stats}};
+use crate::{error::some_error, stats::{GetStats, Stats}, ReadPlusSeek};
 
 use super::{
     belt::Belt,
     enums::{DSPItem, DSPRecipe},
     station::Station,
     vec::{from32le, to32le},
-    F32, traits::{ReplaceItem, ReplaceRecipe, Replace},
+    traits::{ReplaceItem, ReplaceRecipe, Replace},
 };
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
@@ -22,7 +22,7 @@ pub enum BuildingParam {
 }
 
 impl BuildingParam {
-    pub fn from_bp(header: &BuildingHeader, d: &mut dyn Read) -> anyhow::Result<Self> {
+    pub fn from_bp(header: &BuildingHeader, d: &mut dyn ReadPlusSeek) -> anyhow::Result<Self> {
         if header.parameter_count > 32768 { // Just so we don't allocate a crapton of memory
             return Err(some_error(format!("Parameter count too large: {}", header.parameter_count)).into())
         }
@@ -57,7 +57,7 @@ impl BuildingParam {
         }
     }
 
-    pub fn to_bp(&self, d: &mut dyn Write) -> anyhow::Result<()> {
+    pub fn to_bp(&self, d: &mut Cursor<Vec<u8>>) -> anyhow::Result<()> {
         match self {
             Self::Station(s) => s.to_bp(d),
             Self::Belt(Some(b)) => b.to_bp(d),
@@ -82,34 +82,34 @@ impl ReplaceItem for BuildingParam {
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
-#[derive(StructDeser)]
+#[derive(BinRead, BinWrite)]
 pub struct BuildingHeader {
-    #[le]
+    #[br(little)]
     index: u32,
     area_index: i8,
-    #[le]
-    local_offset_x: F32,
-    #[le]
-    local_offset_y: F32,
-    #[le]
-    local_offset_z: F32,
-    #[le]
-    local_offset_x2: F32,
-    #[le]
-    local_offset_y2: F32,
-    #[le]
-    local_offset_z2: F32,
-    #[le]
-    yaw: F32,
-    #[le]
-    yaw2: F32,
-    #[le]
+    #[br(little)]
+    local_offset_x: f32,
+    #[br(little)]
+    local_offset_y: f32,
+    #[br(little)]
+    local_offset_z: f32,
+    #[br(little)]
+    local_offset_x2: f32,
+    #[br(little)]
+    local_offset_y2: f32,
+    #[br(little)]
+    local_offset_z2: f32,
+    #[br(little)]
+    yaw: f32,
+    #[br(little)]
+    yaw2: f32,
+    #[br(little)]
     item_id: u16,
-    #[le]
+    #[br(little)]
     model_index: u16,
-    #[le]
+    #[br(little)]
     output_object_index: u32,
-    #[le]
+    #[br(little)]
     input_object_index: u32,
     output_to_slot: i8,
     input_from_slot: i8,
@@ -117,11 +117,11 @@ pub struct BuildingHeader {
     input_to_slot: i8,
     output_offset: i8,
     input_offset: i8,
-    #[le]
+    #[br(little)]
     recipe_id: u16,
-    #[le]
+    #[br(little)]
     filter_id: u16,
-    #[le]
+    #[br(little)]
     parameter_count: u16,
 }
 
@@ -157,14 +157,14 @@ impl BuildingHeader {
 }
 
 impl Building {
-    pub fn from_bp(mut d: &mut dyn Read) -> anyhow::Result<Self> {
-        let header: BuildingHeader = d.read_type()?;
+    pub fn from_bp(mut d: &mut dyn ReadPlusSeek) -> anyhow::Result<Self> {
+        let header: BuildingHeader = d.read_le()?;
         let param = BuildingParam::from_bp(&header, d)?;
         Ok(Self { header, param })
     }
 
-    pub fn to_bp(&self, mut d: &mut dyn Write) -> anyhow::Result<()> {
-        d.write_type(&self.header)?;
+    pub fn to_bp(&self, d: &mut Cursor<Vec<u8>>) -> anyhow::Result<()> {
+        self.header.write_to(d)?;
         self.param.to_bp(d)
     }
 }

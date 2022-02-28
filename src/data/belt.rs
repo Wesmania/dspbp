@@ -1,33 +1,33 @@
-use std::io::{Read, Write};
+use std::io::Cursor;
 
+use binrw::{BinWrite, BinRead, BinReaderExt};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
-use struct_deser_derive::StructDeser;
 
-use crate::serialize::{ReadType, WriteType};
+use crate::ReadPlusSeek;
 
 use super::{traits::{ReplaceItem, Replace}, enums::DSPItem};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
-#[derive(StructDeser)]
+#[derive(BinRead, BinWrite)]
 pub struct Belt {
-    #[le]
+    #[br(little)]
     label: u32,
-    #[le]
+    #[br(little)]
     count: u32,
 }
 
 impl Belt {
-    pub fn from_bp(mut d: &mut dyn Read) -> anyhow::Result<Self> {
-        d.read_type().map_err(|e| e.into())
+    pub fn from_bp(mut d: &mut dyn ReadPlusSeek) -> anyhow::Result<Self> {
+        d.read_le().map_err(|e| e.into())
     }
 
     pub fn bp_len(&self) -> usize {
         8
     }
 
-    pub fn to_bp(&self, mut d: &mut dyn Write) -> anyhow::Result<()> {
-        d.write_type(self)
+    pub fn to_bp(&self, d: &mut Cursor<Vec<u8>>) -> anyhow::Result<()> {
+        self.write_to(d).map_err(|e| e.into())
     }
 }
 

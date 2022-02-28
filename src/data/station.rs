@@ -1,65 +1,66 @@
-use std::io::{Read, Write};
+use std::io::{Cursor, Write};
 
+use crate::{serialize::{ReadType, WriteType}, ReadPlusSeek};
+
+use binrw::{BinWrite, BinRead, BinReaderExt};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
-use struct_deser::SerializedByteLen;
-use struct_deser_derive::StructDeser;
 
 use crate::{
-    error::Error, serialize::{ReadType, WriteType}, stats::{GetStats, Stats},
+    error::Error, stats::{GetStats, Stats},
 };
 
 use super::{vec::{from32le, to32le}, traits::{ReplaceItem, Replace}, enums::DSPItem};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
-#[derive(StructDeser)]
+#[derive(BinRead, BinWrite)]
 pub struct StationHeader {
-    #[le]
+    #[br(little)]
     work_energy: u32,
-    #[le]
+    #[br(little)]
     drone_range: u32,
-    #[le]
+    #[br(little)]
     vessel_range: u32,
-    #[le]
+    #[br(little)]
     orbital_collector: u32,
-    #[le]
+    #[br(little)]
     warp_distance: u32,
-    #[le]
+    #[br(little)]
     equip_warper: u32,
-    #[le]
+    #[br(little)]
     drone_count: u32,
-    #[le]
+    #[br(little)]
     vessel_count: u32,
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
-#[derive(StructDeser)]
+#[derive(BinRead, BinWrite)]
 pub struct StationSlots {
-    #[le]
+    #[br(little)]
     direction: u32,
-    #[le]
+    #[br(little)]
     storage_index: u32,
-    #[le]
-    _unused1: u32,
-    #[le]
-    _unused2: u32,
+    #[br(little)]
+    unused1: u32,
+    #[br(little)]
+    unused2: u32,
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
-#[derive(StructDeser)]
+#[derive(BinRead, BinWrite)]
 pub struct StationStorage {
-    #[le]
+    #[br(little)]
     item_id: u32,
-    #[le]
+    #[br(little)]
     local_logic: u32,
-    #[le]
+    #[br(little)]
     remote_logic: u32,
-    #[le]
+    #[br(little)]
     max_count: u32,
-    #[le]
-    _unused1: u32,
-    #[le]
-    _unused2: u32,
+    #[br(little)]
+    unused1: u32,
+    #[br(little)]
+    unused2: u32,
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
@@ -84,7 +85,7 @@ impl Station {
     }
 
     pub fn from_bp(
-        mut d: &mut dyn Read,
+        mut d: &mut dyn ReadPlusSeek,
         is_interstellar: bool,
         struct_len: usize,
     ) -> anyhow::Result<Self> {
@@ -97,21 +98,21 @@ impl Station {
         let mut read = 0;
 
         for _ in 0..storage_len {
-            storage.push(d.read_type()?);
-            read += StationStorage::BYTE_LEN;
+            storage.push(d.read_le()?);
+            read += 24;
         }
 
         d.skip(Self::HEADER_OFFSET - read)?;
         read = Self::HEADER_OFFSET;
 
-        let header = d.read_type()?;
-        read += StationHeader::BYTE_LEN;
+        let header = d.read_le()?;
+        read += 32;
 
         d.skip(Self::SLOTS_OFFSET - read)?;
         read = Self::SLOTS_OFFSET;
         for _ in 0..slots_len {
-            slots.push(d.read_type()?);
-            read += StationSlots::BYTE_LEN;
+            slots.push(d.read_le()?);
+            read += 16;
         }
 
         if struct_len < read {
@@ -136,27 +137,27 @@ impl Station {
 
     // In bytes
     pub fn bp_len(&self) -> usize {
-        Self::SLOTS_OFFSET + 12 * StationSlots::BYTE_LEN + self.unknown.len()
+        Self::SLOTS_OFFSET + 12 * 16 + self.unknown.len()
     }
 
-    pub fn to_bp(&self, mut s: &mut dyn Write) -> anyhow::Result<()> {
+    pub fn to_bp(&self, s: &mut Cursor<Vec<u8>>) -> anyhow::Result<()> {
         let mut written = 0;
 
         for sto in &self.storage {
-            s.write_type(sto)?;
-            written += StationStorage::BYTE_LEN;
+            sto.write_to(s)?;
+            written += 24;
         }
         s.pad(Self::HEADER_OFFSET - written)?;
         written = Self::HEADER_OFFSET;
 
-        s.write_type(&self.header)?;
-        written += StationHeader::BYTE_LEN;
+        self.header.write_to(s)?;
+        written += 32;
 
         s.pad(Self::SLOTS_OFFSET - written)?;
         // written = Self::SLOTS_OFFSET;
 
         for sl in &self.slots {
-            s.write_type(sl)?;
+            sl.write_to(s)?;
         }
 
         s.write_all(&from32le(&self.unknown))?;

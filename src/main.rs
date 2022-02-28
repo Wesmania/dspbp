@@ -4,7 +4,7 @@ use clap::StructOpt;
 use data::{traits::{DSPEnum, Replace, ReplaceItem, ReplaceRecipe}, enums::{DSPItem, DSPRecipe}};
 use error::some_error;
 use strum::{ParseError, IntoEnumIterator};
-use std::{io::{Read, Write}, collections::HashMap};
+use std::{io::{Read, Write, Seek, Cursor, Stdout}, collections::HashMap, fs::File};
 
 use crate::stats::{Stats, GetStats};
 
@@ -23,7 +23,52 @@ fn iof(arg: &Option<String>) -> Option<&str> {
     }
 }
 
-fn itob(i: &mut Box<dyn Read>) -> anyhow::Result<Blueprint> {
+pub trait ReadPlusSeek: Read + Seek {}
+impl<T: Read + Seek> ReadPlusSeek for T {}
+pub trait WritePlusSeek: Write + Seek {}
+impl<T: Write + Seek> WritePlusSeek for T {}
+
+pub enum WriteSeek {
+    File(File),
+    BufOut(Cursor<Vec<u8>>, Stdout)
+}
+
+impl WriteSeek {
+    fn flush_if_stdout(&mut self) -> std::io::Result<()> {
+        if let Self::BufOut(c, s) = self {
+            s.write_all(c.get_ref().as_ref())
+        } else {
+            Ok(())
+        }
+    }
+}
+
+impl Write for WriteSeek {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        match self {
+            Self::File(f) => f.write(buf),
+            Self::BufOut(c, _) => c.write(buf),
+        }
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        match self {
+            Self::File(f) => f.flush(),
+            Self::BufOut(c, _) => c.flush(),
+        }
+    }
+}
+
+impl Seek for WriteSeek {
+    fn seek(&mut self, pos: std::io::SeekFrom) -> std::io::Result<u64> {
+        match self {
+            Self::File(f) => f.seek(pos),
+            Self::BufOut(c, _) => c.seek(pos),
+        }
+    }
+}
+
+fn itob(i: &mut Box<dyn ReadPlusSeek>) -> anyhow::Result<Blueprint> {
     let mut data = vec![];
     i.read_to_end(&mut data)?;
     let data = String::from_utf8(data)?;
@@ -57,13 +102,17 @@ fn parse_into_enum_map<T: DSPEnum + 'static>(s: &str) -> anyhow::Result<Box<Repl
 fn main() -> anyhow::Result<()> {
     let args = args::Args::parse();
 
-    let mut input: Box<dyn Read> = match iof(&args.input) {
-        None => Box::new(std::io::stdin()),
+    let mut input: Box<dyn ReadPlusSeek> = match iof(&args.input) {
+        None => {
+            let mut all_input = vec![];
+            std::io::stdin().read_to_end(&mut all_input)?;
+            Box::new(Cursor::new(all_input))
+        },
         Some(file) => Box::new(std::fs::File::open(file)?),
     };
-    let mut output: Box<dyn Write> = match iof(&args.output) {
-        None => Box::new(std::io::stdout()),
-        Some(file) => Box::new(
+    let mut output: WriteSeek = match iof(&args.output) {
+        None => WriteSeek::BufOut(Cursor::new(vec![]), std::io::stdout()),
+        Some(file) => WriteSeek::File(
             std::fs::OpenOptions::new()
                 .write(true)
                 .truncate(true)
@@ -77,6 +126,7 @@ fn main() -> anyhow::Result<()> {
         Commands::Dump => {
             let bp = itob(&mut input)?;
             output.write_all(&bp.dump_json()?)?;
+            output.flush_if_stdout()?;
         }
         #[cfg(feature = "dump")]
         Commands::Undump => {
@@ -85,6 +135,7 @@ fn main() -> anyhow::Result<()> {
             let data = String::from_utf8(data)?;
             let bp = Blueprint::new_from_json(&data)?;
             output.write_all(bp.into_bp_string()?.as_bytes())?;
+            output.flush_if_stdout()?;
         }
         Commands::Edit => {
             let mut bp = itob(&mut input)?;
@@ -97,6 +148,7 @@ fn main() -> anyhow::Result<()> {
                 bp.replace_recipe(&replace);
             }
             output.write_all(bp.into_bp_string()?.as_bytes())?;
+            output.flush_if_stdout()?;
         }
         Commands::Info => {
             let bp = itob(&mut input)?;

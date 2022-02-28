@@ -1,5 +1,5 @@
 use std::fmt::Write as _;
-use std::io::{Read, Write};
+use std::io::{Read, Write, Cursor};
 use std::str::FromStr;
 
 use crate::data::blueprint::BlueprintData;
@@ -38,7 +38,7 @@ impl Blueprint {
         let mut data = vec![];
         d.read_to_end(&mut data)?;
 
-        BlueprintData::from_bp(&mut &data[..])
+        BlueprintData::from_bp(&mut Cursor::new(&mut &data[..]))
     }
 
     fn hash_str_to_hash(d: &str) -> anyhow::Result<MD5Hash> {
@@ -63,9 +63,9 @@ impl Blueprint {
 
     fn pack_data(&self) -> anyhow::Result<String> {
         let mut e = GzEncoder::new(Vec::new(), Compression::default());
-        let mut data = vec![];
-        self.data.to_bp(&mut data)?;
-        e.write_all(&data).unwrap();
+        let mut ws = Cursor::new(vec![]);
+        self.data.to_bp(&mut ws)?;
+        e.write_all(&ws.into_inner()).unwrap();
         let gzipped_data = e.finish().unwrap();
         Ok(base64::encode(gzipped_data.as_slice()))
     }

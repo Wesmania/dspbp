@@ -11,8 +11,7 @@ anyhow = "*"
 thiserror = "*"
 lazy_static = "*"
 serde = { version = "*", features = ["derive"], optional = true}
-struct_deser = "*"
-struct_deser-derive = "*"
+binrw = "*"
 num_enum = "*"
 serde_json = {version = "*", optional = true }
 strum = { version = "*", features = ["derive"] }

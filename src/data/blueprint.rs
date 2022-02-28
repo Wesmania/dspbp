@@ -1,40 +1,40 @@
-use std::io::{Read, Write};
+use std::io::Cursor;
 
+use binrw::{BinWrite, BinRead, BinReaderExt};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
-use struct_deser_derive::StructDeser;
 
 use crate::{
     data::{area::Area, building::Building},
-    error::Error, serialize::{ReadType, WriteType}, stats::{GetStats, Stats},
+    error::Error, stats::{GetStats, Stats}, ReadPlusSeek,
 };
 
 use super::{traits::{ReplaceItem, ReplaceRecipe, Replace}, enums::{DSPItem, DSPRecipe}};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
-#[derive(StructDeser)]
+#[derive(BinRead, BinWrite)]
 pub struct Header {
-    #[le]
+    #[br(little)]
     version: u32,
-    #[le]
+    #[br(little)]
     cursor_offset_x: u32,
-    #[le]
+    #[br(little)]
     cursor_offset_y: u32,
-    #[le]
+    #[br(little)]
     cursor_target_area: u32,
-    #[le]
+    #[br(little)]
     dragbox_size_x: u32,
-    #[le]
+    #[br(little)]
     dragbox_size_y: u32,
-    #[le]
+    #[br(little)]
     primary_area_index: u32,
     area_count: u8,
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
-#[derive(StructDeser)]
-pub struct BuildingCount(#[le] u32);
+#[derive(BinRead, BinWrite)]
+pub struct BuildingCount(#[br(little)] u32);
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 pub struct BlueprintData {
@@ -45,8 +45,8 @@ pub struct BlueprintData {
 }
 
 impl BlueprintData {
-    pub fn from_bp(mut d: &mut dyn Read) -> anyhow::Result<Self> {
-        let header: Header = d.read_type()?;
+    pub fn from_bp(mut d: &mut dyn ReadPlusSeek) -> anyhow::Result<Self> {
+        let header: Header = d.read_le()?;
         if header.version != 1 {
             return Err(Error::E(format!(
                 "Expected blueprint version 1, got {}",
@@ -57,9 +57,9 @@ impl BlueprintData {
         let mut areas = vec![];
         let mut buildings = vec![];
         for _ in 0..header.area_count {
-            areas.push(d.read_type()?);
+            areas.push(d.read_le()?);
         }
-        let building_count: BuildingCount = d.read_type()?;
+        let building_count: BuildingCount = d.read_le()?;
         for _ in 0..building_count.0 {
             buildings.push(Building::from_bp(d)?);
         }
@@ -71,12 +71,12 @@ impl BlueprintData {
         })
     }
 
-    pub fn to_bp(&self, mut d: &mut dyn Write) -> anyhow::Result<()> {
-        d.write_type(&self.header)?;
+    pub fn to_bp(&self, d: &mut Cursor<Vec<u8>>) -> anyhow::Result<()> {
+        self.header.write_to(d)?;
         for a in &self.areas {
-            d.write_type(a)?;
+            a.write_to(d)?;
         }
-        d.write_type(&self.building_count)?;
+        self.building_count.write_to(d)?;
         for b in &self.buildings {
             b.to_bp(d)?;
         }
