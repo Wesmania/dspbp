@@ -1,6 +1,4 @@
-use std::io::Cursor;
-
-use binrw::{BinWrite, BinRead, BinReaderExt};
+use binrw::{BinWrite, BinRead};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
@@ -13,16 +11,6 @@ pub struct Belt {
     label: u32,
     #[br(little)]
     count: u32,
-}
-
-impl Belt {
-    pub fn from_bp(d: &mut Cursor<Vec<u8>>) -> anyhow::Result<Self> {
-        d.read_le().map_err(|e| e.into())
-    }
-
-    pub fn to_bp(&self, d: &mut Cursor<Vec<u8>>) -> anyhow::Result<()> {
-        self.write_to(d).map_err(|e| e.into())
-    }
 }
 
 impl ReplaceItem for Belt {

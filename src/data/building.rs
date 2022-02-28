@@ -37,7 +37,7 @@ impl BuildingParam {
             Ok(BuildingParam::Station(station))
         } else if header.is_belt() {
             let belt = if header.parameter_count > 0 {
-                Some(Belt::from_bp(d)?)
+                Some(d.read_le()?)
             } else {
                 None
             };
@@ -53,7 +53,7 @@ impl BuildingParam {
     pub fn to_bp(&self, d: &mut Cursor<Vec<u8>>) -> anyhow::Result<()> {
         match self {
             Self::Station(s) => Ok(s.write_to(d)?),
-            Self::Belt(Some(b)) => b.to_bp(d),
+            Self::Belt(Some(b)) => Ok(b.write_to(d)?),
             Self::Belt(None) => Ok(()),
             Self::Unknown(v) => {
                 d.write(&from32le(v))?;
