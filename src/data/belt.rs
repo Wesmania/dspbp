@@ -4,8 +4,6 @@ use binrw::{BinWrite, BinRead, BinReaderExt};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
-use crate::ReadPlusSeek;
-
 use super::{traits::{ReplaceItem, Replace}, enums::DSPItem};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
@@ -18,12 +16,8 @@ pub struct Belt {
 }
 
 impl Belt {
-    pub fn from_bp(mut d: &mut dyn ReadPlusSeek) -> anyhow::Result<Self> {
+    pub fn from_bp(d: &mut Cursor<Vec<u8>>) -> anyhow::Result<Self> {
         d.read_le().map_err(|e| e.into())
-    }
-
-    pub fn bp_len(&self) -> usize {
-        8
     }
 
     pub fn to_bp(&self, d: &mut Cursor<Vec<u8>>) -> anyhow::Result<()> {

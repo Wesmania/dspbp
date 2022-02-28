@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     data::{area::Area, building::Building},
-    error::Error, stats::{GetStats, Stats}, ReadPlusSeek,
+    error::Error, stats::{GetStats, Stats},
 };
 
 use super::{traits::{ReplaceItem, ReplaceRecipe, Replace}, enums::{DSPItem, DSPRecipe}};
@@ -45,7 +45,7 @@ pub struct BlueprintData {
 }
 
 impl BlueprintData {
-    pub fn from_bp(mut d: &mut dyn ReadPlusSeek) -> anyhow::Result<Self> {
+    pub fn from_bp(d: &mut Cursor<Vec<u8>>) -> anyhow::Result<Self> {
         let header: Header = d.read_le()?;
         if header.version != 1 {
             return Err(Error::E(format!(

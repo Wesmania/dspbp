@@ -1,10 +1,10 @@
-use std::io::{Cursor, Write};
+use std::io::{Cursor, Write, Read};
 
 use binrw::{BinWrite, BinRead, BinReaderExt};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
-use crate::{error::some_error, stats::{GetStats, Stats}, ReadPlusSeek};
+use crate::{error::some_error, stats::{GetStats, Stats}};
 
 use super::{
     belt::Belt,
@@ -22,15 +22,17 @@ pub enum BuildingParam {
 }
 
 impl BuildingParam {
-    pub fn from_bp(header: &BuildingHeader, d: &mut dyn ReadPlusSeek) -> anyhow::Result<Self> {
+    pub fn from_bp(header: &BuildingHeader, d: &mut Cursor<Vec<u8>>) -> anyhow::Result<Self> {
         if header.parameter_count > 32768 { // Just so we don't allocate a crapton of memory
             return Err(some_error(format!("Parameter count too large: {}", header.parameter_count)).into())
         }
         if header.has_station() {
-            let station = Station::from_bp(
+            if header.parameter_count != 2048 {
+                return Err(some_error("Expected parameter count 2048 for logistic station").into());
+            }
+            let station = Station::read_args(
                 d,
-                header.has_interstellar(),
-                header.parameter_count as usize * 4,
+                (header.has_interstellar(), ),
             )?;
             Ok(BuildingParam::Station(station))
         } else if header.is_belt() {
@@ -48,18 +50,9 @@ impl BuildingParam {
         }
     }
 
-    pub fn bp_len(&self) -> usize {
-        match self {
-            Self::Station(s) => s.bp_len(),
-            Self::Belt(Some(b)) => b.bp_len(),
-            Self::Belt(None) => 0,
-            Self::Unknown(v) => v.len() * 4,
-        }
-    }
-
     pub fn to_bp(&self, d: &mut Cursor<Vec<u8>>) -> anyhow::Result<()> {
         match self {
-            Self::Station(s) => s.to_bp(d),
+            Self::Station(s) => Ok(s.write_to(d)?),
             Self::Belt(Some(b)) => b.to_bp(d),
             Self::Belt(None) => Ok(()),
             Self::Unknown(v) => {
@@ -157,7 +150,7 @@ impl BuildingHeader {
 }
 
 impl Building {
-    pub fn from_bp(mut d: &mut dyn ReadPlusSeek) -> anyhow::Result<Self> {
+    pub fn from_bp(d: &mut Cursor<Vec<u8>>) -> anyhow::Result<Self> {
         let header: BuildingHeader = d.read_le()?;
         let param = BuildingParam::from_bp(&header, d)?;
         Ok(Self { header, param })

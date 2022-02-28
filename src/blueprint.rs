@@ -38,7 +38,7 @@ impl Blueprint {
         let mut data = vec![];
         d.read_to_end(&mut data)?;
 
-        BlueprintData::from_bp(&mut Cursor::new(&mut &data[..]))
+        BlueprintData::from_bp(&mut Cursor::new(data))
     }
 
     fn hash_str_to_hash(d: &str) -> anyhow::Result<MD5Hash> {
