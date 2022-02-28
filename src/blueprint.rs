@@ -22,6 +22,7 @@ pub struct Blueprint {
     timestamp: u64,
     game_version: String,
     short_desc: String,
+    desc: String,
     data: BlueprintData,
 }
 
@@ -31,8 +32,6 @@ impl Blueprint {
     }
 
     fn unpack_data(b64data: &str) -> anyhow::Result<BlueprintData> {
-        let b64data = &b64data[1..]; // Skip first quote
-
         let zipped_data =
             base64::decode(b64data).map_err(|_| some_error("Failed to base64 decode blueprint"))?;
         let mut d = GzDecoder::new(zipped_data.as_slice());
@@ -105,8 +104,13 @@ impl Blueprint {
 
         let [fixed0_1, layout]: [&str; 2] = fields[0..2].try_into().unwrap();
         let icons = &fields[2..7];
-        let [fixed0_2, timestamp, game_version, short_desc, b64data]: [&str; 5] =
+        let [fixed0_2, timestamp, game_version, short_desc, desc_plus_b64data]: [&str; 5] =
             fields[7..12].try_into().unwrap();
+        let [desc, b64data]: [&str; 2] = desc_plus_b64data
+            .split('"')
+            .collect::<Vec<&str>>()
+            .try_into()
+            .unwrap();
 
         let fixed0_1: u32 = Self::int(fixed0_1, "fixed0_1")?;
         let layout = Self::int(layout, "layout")?;
@@ -132,6 +136,7 @@ impl Blueprint {
             timestamp,
             game_version: game_version.into(),
             short_desc: short_desc.into(),
+            desc: desc.into(),
             data,
         })
     }
@@ -139,12 +144,13 @@ impl Blueprint {
     pub fn into_bp_string(&self) -> anyhow::Result<String> {
         let icons = self.icons.map(|x| x.to_string()).join(",");
         let mut out = format!(
-            "BLUEPRINT:0,{},{},0,{},{},{},\"{}",
+            "BLUEPRINT:0,{},{},0,{},{},{},{}\"{}",
             self.layout,
             icons,
             self.timestamp,
             self.game_version,
             self.short_desc,
+            self.desc,
             self.pack_data()?
         );
         let hash = Self::hash(&out);
