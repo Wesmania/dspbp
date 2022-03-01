@@ -6,6 +6,8 @@ use super::{traits::{ReplaceItem, Replace}, enums::DSPItem};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
+#[br(import(param_count: usize))]
+#[br(pre_assert(param_count == 2))]
 pub struct Belt {
     #[br(little)]
     label: u32,

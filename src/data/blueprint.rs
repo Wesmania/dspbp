@@ -61,7 +61,7 @@ impl BlueprintData {
         }
         let building_count: BuildingCount = d.read_le()?;
         for _ in 0..building_count.0 {
-            buildings.push(Building::from_bp(d)?);
+            buildings.push(d.read_le()?);
         }
         Ok(Self {
             header,
@@ -78,7 +78,7 @@ impl BlueprintData {
         }
         self.building_count.write_to(d)?;
         for b in &self.buildings {
-            b.to_bp(d)?;
+            b.write_to(d)?;
         }
         Ok(())
     }

@@ -142,6 +142,29 @@ pub enum DSPItem {
     AccumulatorFull = 2207,
 }
 
+impl DSPItem {
+    pub fn is_belt(&self) -> bool {
+        [
+            Self::ConveyorBeltMKI,
+            Self::ConveyorBeltMKII,
+            Self::ConveyorBeltMKIII,
+        ].contains(self)
+    }
+
+    pub fn is_station(&self) -> bool {
+        [
+            Self::PlanetaryLogisticsStation,
+            Self::InterstellarLogisticsStation,
+        ].contains(self)
+    }
+
+    pub fn is_interstellar_station(&self) -> bool {
+        [
+            Self::InterstellarLogisticsStation,
+        ].contains(self)
+    }
+}
+
 #[derive(TryFromPrimitive, IntoPrimitive, EnumString, EnumIter, AsRefStr, PartialEq, Eq, Clone, Copy, Hash)]
 #[repr(u16)]
 pub enum DSPRecipe {

@@ -1,66 +1,41 @@
-use std::io::{Cursor, Write, Read};
-
-use binrw::{BinWrite, BinRead, BinReaderExt};
+use binrw::{BinWrite, BinRead};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
-use crate::{error::some_error, stats::{GetStats, Stats}};
+use crate::stats::{GetStats, Stats};
 
 use super::{
     belt::Belt,
     enums::{DSPItem, DSPRecipe},
     station::Station,
-    vec::{from32le, to32le},
     traits::{ReplaceItem, ReplaceRecipe, Replace},
 };
 
-#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
-pub enum BuildingParam {
-    Station(Station),
-    Belt(Option<Belt>),
-    Unknown(Vec<u32>),
+fn b_is(i: u16, f: fn(&DSPItem) -> bool) -> bool {
+    i.try_into().as_ref().map(f).unwrap_or(false)
 }
 
-impl BuildingParam {
-    pub fn from_bp(header: &BuildingHeader, d: &mut Cursor<Vec<u8>>) -> anyhow::Result<Self> {
-        if header.parameter_count > 32768 { // Just so we don't allocate a crapton of memory
-            return Err(some_error(format!("Parameter count too large: {}", header.parameter_count)).into())
-        }
-        if header.has_station() {
-            if header.parameter_count != 2048 {
-                return Err(some_error("Expected parameter count 2048 for logistic station").into());
-            }
-            let station = Station::read_args(
-                d,
-                (header.has_interstellar(), ),
-            )?;
-            Ok(BuildingParam::Station(station))
-        } else if header.is_belt() {
-            let belt = if header.parameter_count > 0 {
-                Some(d.read_le()?)
-            } else {
-                None
-            };
-            Ok(BuildingParam::Belt(belt))
-        } else {
-            let mut read = vec![0u8; header.parameter_count as usize * 4];
-            d.read_exact(&mut read)?;
-            let params: Vec<u32> = to32le(read);
-            Ok(BuildingParam::Unknown(params))
-        }
-    }
-
-    pub fn to_bp(&self, d: &mut Cursor<Vec<u8>>) -> anyhow::Result<()> {
-        match self {
-            Self::Station(s) => Ok(s.write_to(d)?),
-            Self::Belt(Some(b)) => Ok(b.write_to(d)?),
-            Self::Belt(None) => Ok(()),
-            Self::Unknown(v) => {
-                d.write(&from32le(v))?;
-                Ok(())
-            }
-        }
-    }
+#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
+#[derive(BinRead, BinWrite)]
+#[br(import { param_count: usize, building: u16 })]
+#[br(pre_assert(param_count <= 32768))]
+pub enum BuildingParam {
+    #[br(pre_assert(b_is(building, DSPItem::is_station)))]
+    Station(
+        #[br(args { is_interstellar: b_is(building, DSPItem::is_interstellar_station), param_count: param_count })]
+        Station
+    ),
+    #[br(pre_assert(b_is(building, DSPItem::is_belt)))]
+    Belt(
+        #[br(if(param_count != 0))]
+        #[br(args(param_count))]
+        Option<Belt>
+    ),
+    Unknown(
+        #[br(count = param_count)]
+        #[br(little)]
+        Vec<u32>
+    ),
 }
 
 impl ReplaceItem for BuildingParam {
@@ -119,47 +94,11 @@ pub struct BuildingHeader {
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
+#[derive(BinRead, BinWrite)]
 pub struct Building {
     header: BuildingHeader,
+    #[br(args { param_count: header.parameter_count as usize, building: header.item_id })]
     param: BuildingParam,
-}
-
-impl BuildingHeader {
-    fn has_station(&self) -> bool {
-        match DSPItem::try_from(self.item_id) {
-            Ok(DSPItem::PlanetaryLogisticsStation) => true,
-            Ok(DSPItem::InterstellarLogisticsStation) => true,
-            _ => false,
-        }
-    }
-    fn has_interstellar(&self) -> bool {
-        match DSPItem::try_from(self.item_id) {
-            Ok(DSPItem::InterstellarLogisticsStation) => true,
-            _ => false,
-        }
-    }
-
-    fn is_belt(&self) -> bool {
-        let belts = [
-            DSPItem::ConveyorBeltMKI,
-            DSPItem::ConveyorBeltMKII,
-            DSPItem::ConveyorBeltMKIII,
-        ];
-        DSPItem::try_from(self.item_id).map_or(false, |i| belts.contains(&i))
-    }
-}
-
-impl Building {
-    pub fn from_bp(d: &mut Cursor<Vec<u8>>) -> anyhow::Result<Self> {
-        let header: BuildingHeader = d.read_le()?;
-        let param = BuildingParam::from_bp(&header, d)?;
-        Ok(Self { header, param })
-    }
-
-    pub fn to_bp(&self, d: &mut Cursor<Vec<u8>>) -> anyhow::Result<()> {
-        self.header.write_to(d)?;
-        self.param.to_bp(d)
-    }
 }
 
 impl ReplaceItem for Building {

@@ -59,7 +59,8 @@ pub struct StationStorage {
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
-#[br(import(is_interstellar: bool))]
+#[br(pre_assert(param_count == 2048))]
+#[br(import { is_interstellar: bool, param_count: usize })]
 pub struct Station {
     #[br(calc = is_interstellar)]
     #[bw(ignore)]
