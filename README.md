@@ -29,6 +29,9 @@ Start with `dspbp help`, go from there.
   reverse-engineered DSP's custom hash and a bunch of blueprint stuff. 80% of
   this code is reimplementation of what he did.
 * Guys at DSP wiki (the fandom one) for recipe IDs.
+* Thanks to huww98 and his awesome blueprint visualizer at
+  https://github.com/huww98/dsp_blueprint_editor for letting me borrow his code
+  as I see fit.
 
 ## TODOs
 

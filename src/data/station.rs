@@ -10,7 +10,7 @@ use super::{traits::{ReplaceItem, Replace}, enums::DSPItem};
 #[derive(BinRead, BinWrite)]
 pub struct StationHeader {
     #[br(little)]
-    work_energy: u32,
+    work_energy_per_tick: u32,
     #[br(little)]
     drone_range: u32,
     #[br(little)]
@@ -22,9 +22,11 @@ pub struct StationHeader {
     #[br(little)]
     equip_warper: u32,
     #[br(little)]
-    drone_count: u32,
+    drone_min_capacity: u32,
     #[br(little)]
-    vessel_count: u32,
+    vessel_min_capacity: u32,
+    #[br(little)]
+    piler_count: u32,
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
@@ -69,17 +71,17 @@ pub struct Station {
     // ignore last 2 if not interstellar
     #[br(count = 5)]
     storage: Vec<StationStorage>,           // 0 (in &u32)
-    #[br(count = 2)]
+    #[br(count = 192 - 30)]
     unknown1: Vec<u32>,
-    header: StationHeader,                  // 32
-
-    #[br(count = 8)]
-    unknown2: Vec<u32>,
 
     #[br(count = 12)]
-    slots: Vec<StationSlots>,               // 48
-    #[br(count = 2048 - 96)]
-    unknown3: Vec<u32>,                     // 96
+    slots: Vec<StationSlots>,               // 192
+    #[br(count = 320 - 192 - 48)]
+    unknown2: Vec<u32>,
+
+    header: StationHeader,                  // 320
+    #[br(count = 2048 - 320 - 9)]
+    unknown3: Vec<u32>,
 }
 
 impl Station {
