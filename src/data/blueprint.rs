@@ -1,13 +1,11 @@
-use std::io::Cursor;
-
-use binrw::{BinWrite, BinRead, BinReaderExt};
+use binrw::{BinWrite, BinRead};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
 
 use crate::{
     data::{area::Area, building::Building},
-    error::Error, stats::{GetStats, Stats},
+    stats::{GetStats, Stats},
 };
 
 use super::{traits::{ReplaceItem, ReplaceRecipe, Replace}, enums::{DSPItem, DSPRecipe}};
@@ -34,54 +32,15 @@ pub struct Header {
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
-pub struct BuildingCount(#[br(little)] u32);
-
-#[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 pub struct BlueprintData {
+    #[br(assert(header.version == 1))]
     header: Header,
+    #[br(count = header.area_count)]
     areas: Vec<Area>,
-    building_count: BuildingCount,
+    #[br(little)]
+    building_count: u32,
+    #[br(count = building_count)]
     buildings: Vec<Building>,
-}
-
-impl BlueprintData {
-    pub fn from_bp(d: &mut Cursor<Vec<u8>>) -> anyhow::Result<Self> {
-        let header: Header = d.read_le()?;
-        if header.version != 1 {
-            return Err(Error::E(format!(
-                "Expected blueprint version 1, got {}",
-                header.version
-            ))
-            .into());
-        }
-        let mut areas = vec![];
-        let mut buildings = vec![];
-        for _ in 0..header.area_count {
-            areas.push(d.read_le()?);
-        }
-        let building_count: BuildingCount = d.read_le()?;
-        for _ in 0..building_count.0 {
-            buildings.push(d.read_le()?);
-        }
-        Ok(Self {
-            header,
-            areas,
-            building_count,
-            buildings,
-        })
-    }
-
-    pub fn to_bp(&self, d: &mut Cursor<Vec<u8>>) -> anyhow::Result<()> {
-        self.header.write_to(d)?;
-        for a in &self.areas {
-            a.write_to(d)?;
-        }
-        self.building_count.write_to(d)?;
-        for b in &self.buildings {
-            b.write_to(d)?;
-        }
-        Ok(())
-    }
 }
 
 impl ReplaceItem for BlueprintData {

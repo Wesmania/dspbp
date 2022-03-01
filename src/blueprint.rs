@@ -7,6 +7,7 @@ use crate::data::enums::{DSPItem, DSPRecipe};
 use crate::data::traits::{ReplaceItem, ReplaceRecipe, Replace};
 use crate::error::{some_error, Error};
 use crate::stats::{GetStats, Stats};
+use binrw::{BinReaderExt, BinWrite};
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use flate2::Compression;
@@ -38,7 +39,7 @@ impl Blueprint {
         let mut data = vec![];
         d.read_to_end(&mut data)?;
 
-        BlueprintData::from_bp(&mut Cursor::new(data))
+        Ok(Cursor::new(data).read_le()?)
     }
 
     fn hash_str_to_hash(d: &str) -> anyhow::Result<MD5Hash> {
@@ -64,7 +65,7 @@ impl Blueprint {
     fn pack_data(&self) -> anyhow::Result<String> {
         let mut e = GzEncoder::new(Vec::new(), Compression::default());
         let mut ws = Cursor::new(vec![]);
-        self.data.to_bp(&mut ws)?;
+        self.data.write_to(&mut ws)?;
         e.write_all(&ws.into_inner()).unwrap();
         let gzipped_data = e.finish().unwrap();
         Ok(base64::encode(gzipped_data.as_slice()))
