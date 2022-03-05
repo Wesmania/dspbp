@@ -1,3 +1,5 @@
+use std::f64::consts::PI;
+
 use binrw::{BinWrite, BinRead};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
@@ -10,15 +12,15 @@ use super::{traits::{ReplaceItem, Replace}, enums::DSPItem};
 #[derive(BinRead, BinWrite)]
 pub struct StationHeader {
     #[br(little)]
-    pub work_energy_per_tick: u32,
+    pub work_energy_per_tick: u32,  // In watts. 1M is 60MW/s.
     #[br(little)]
-    pub drone_range: u32,
+    pub drone_range: u32,   // cos(angle) * 10^8
     #[br(little)]
-    pub vessel_range: u32,
+    pub vessel_range: u32,  // 1LY = 24000
     #[br(little)]
     pub orbital_collector: u32,
     #[br(little)]
-    pub warp_distance: u32,
+    pub warp_distance: u32, // 1AU = 40000
     #[br(little)]
     pub equip_warper: u32,
     #[br(little)]
@@ -27,6 +29,15 @@ pub struct StationHeader {
     pub vessel_min_capacity: u32,
     #[br(little)]
     pub piler_count: u32,
+}
+
+impl StationHeader {
+    pub const LY: usize = 24000;
+    pub const AU: usize = 40000;
+    pub fn angle_to_drone_range(angle: usize) -> u32 {
+        let angle = f64::cos((angle as f64) / 180.0 * PI);
+        (angle * 100_000_000.0).round() as u32
+    }
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
@@ -70,12 +81,12 @@ pub struct Station {
 
     // ignore last 2 if not interstellar
     #[br(count = 5)]
-    pub storage: Vec<StationStorage>,           // 0 (in &u32)
+    pub storage: Vec<StationStorage>,
     #[br(count = 192 - 30)]
     pub unknown1: Vec<u32>,
 
     #[br(count = 12)]
-    pub slots: Vec<StationSlots>,               // 192
+    pub slots: Vec<StationSlots>,       // Counter-clockwise, from rightmost north.
     #[br(count = 320 - 192 - 48)]
     pub unknown2: Vec<u32>,
 
@@ -124,13 +135,14 @@ impl GetStats for Station {
 
 #[cfg(test)]
 mod test {
-    use crate::{testutil::get_file, blueprint::Blueprint, data::{enums::DSPItem, building::BuildingParam}};
+    use crate::{testutil::get_file, blueprint::Blueprint, data::{enums::DSPItem, building::BuildingParam, station::StationHeader}};
 
     #[test]
     fn example_station_1() {
         let bp_file = "Example interstellar station 1.txt";
         let f = get_file(bp_file);
         let bp = Blueprint::new(std::str::from_utf8(&f).unwrap()).unwrap();
+        // Drones / ships / warpers part is irrelevant, not kept in blueprint.
         let description =
             "Example station 1.\n\
             * Wares: blue/red/yellow/purple/green cubes.\n\
@@ -139,7 +151,7 @@ mod test {
             20% min drone load. 40% min vessel load. Orbital collector on. Warpers required on.\n\
             * Slots all out. From north leftmost clockwise: blue-red-red, \
             blue-yellow-yellow, blue-purple-purple, blue-green-green.";
-        assert!(&bp.get_description().unwrap() == description);
+        assert_eq!(&bp.get_description().unwrap(), description);
 
         let station = bp.data.buildings.iter()
             .find(|b| b.kind() == Ok(DSPItem::InterstellarLogisticsStation))
@@ -150,10 +162,28 @@ mod test {
         };
 
         let sto = &station.storage;
-        assert!(sto[0].item_id == DSPItem::ElectromagneticMatrix as u32);
-        assert!(sto[1].item_id == DSPItem::EnergyMatrix as u32);
-        assert!(sto[2].item_id == DSPItem::StructureMatrix as u32);
-        assert!(sto[3].item_id == DSPItem::InformationMatrix as u32);
-        assert!(sto[4].item_id == DSPItem::GravityMatrix as u32);
+        assert_eq!(sto[0].item_id, DSPItem::ElectromagneticMatrix as u32);
+        assert_eq!(sto[1].item_id, DSPItem::EnergyMatrix as u32);
+        assert_eq!(sto[2].item_id, DSPItem::StructureMatrix as u32);
+        assert_eq!(sto[3].item_id, DSPItem::InformationMatrix as u32);
+        assert_eq!(sto[4].item_id, DSPItem::GravityMatrix as u32);
+
+        let h = &station.header;
+        assert_eq!(h.work_energy_per_tick, 1000_000);   // 1 MW per tick, 60 MW per second
+        assert_eq!(h.drone_range, StationHeader::angle_to_drone_range(50));
+        assert_eq!(h.vessel_range, (StationHeader::LY * 6) as u32);
+        assert_eq!(h.orbital_collector, 1);
+        assert_eq!(h.warp_distance, (StationHeader::AU * 2) as u32);
+        assert_eq!(h.equip_warper, 1);
+        assert_eq!(h.drone_min_capacity, 20);
+        assert_eq!(h.vessel_min_capacity, 40);
+        assert_eq!(h.piler_count, 0);
+
+        let s = &station.slots;
+        let idx: Vec<u32> = s.iter().map(|x| x.storage_index).collect();
+        assert_eq!(&idx, &[2, 2, 1,
+                           5, 5, 1,
+                           4, 4, 1,
+                           3, 3, 1]);
     }
 }
