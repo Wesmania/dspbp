@@ -152,6 +152,7 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Info => {
             let bp = itob(&mut input)?;
+            println!("{}", bp.get_description()?);
             let mut stats = Stats::new();
             bp.get_stats(&mut stats);
             print!("{}", stats);

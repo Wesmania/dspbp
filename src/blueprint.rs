@@ -22,7 +22,7 @@ pub struct Blueprint {
     icons: [u32; 5],
     timestamp: u64,
     game_version: String,
-    short_desc: String,
+    icon_text: String,
     desc: String,
     data: BlueprintData,
 }
@@ -105,7 +105,7 @@ impl Blueprint {
 
         let [fixed0_1, layout]: [&str; 2] = fields[0..2].try_into().unwrap();
         let icons = &fields[2..7];
-        let [fixed0_2, timestamp, game_version, short_desc, desc_plus_b64data]: [&str; 5] =
+        let [fixed0_2, timestamp, game_version, icon_text, desc_plus_b64data]: [&str; 5] =
             fields[7..12].try_into().unwrap();
         let [desc, b64data]: [&str; 2] = desc_plus_b64data
             .split('"')
@@ -136,7 +136,7 @@ impl Blueprint {
             icons: icons.try_into().unwrap(),
             timestamp,
             game_version: game_version.into(),
-            short_desc: short_desc.into(),
+            icon_text: icon_text.into(),
             desc: desc.into(),
             data,
         })
@@ -150,7 +150,7 @@ impl Blueprint {
             icons,
             self.timestamp,
             self.game_version,
-            self.short_desc,
+            self.icon_text,
             self.desc,
             self.pack_data()?
         );
@@ -170,6 +170,10 @@ impl Blueprint {
     #[cfg(feature = "dump")]
     pub fn dump_json(&self) -> anyhow::Result<Vec<u8>> {
         Ok(serde_json::to_vec(self)?)
+    }
+
+    pub fn get_description(&self) -> anyhow::Result<String> {
+        Ok(urlencoding::decode(&self.desc)?.into_owned())
     }
 }
 
