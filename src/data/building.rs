@@ -1,4 +1,5 @@
 use binrw::{BinWrite, BinRead};
+use num_enum::TryFromPrimitiveError;
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
@@ -53,52 +54,58 @@ impl ReplaceItem for BuildingParam {
 #[derive(BinRead, BinWrite)]
 pub struct BuildingHeader {
     #[br(little)]
-    index: u32,
-    area_index: i8,
+    pub index: u32,
+    pub area_index: i8,
     #[br(little)]
-    local_offset_x: f32,
+    pub local_offset_x: f32,
     #[br(little)]
-    local_offset_y: f32,
+    pub local_offset_y: f32,
     #[br(little)]
-    local_offset_z: f32,
+    pub local_offset_z: f32,
     #[br(little)]
-    local_offset_x2: f32,
+    pub local_offset_x2: f32,
     #[br(little)]
-    local_offset_y2: f32,
+    pub local_offset_y2: f32,
     #[br(little)]
-    local_offset_z2: f32,
+    pub local_offset_z2: f32,
     #[br(little)]
-    yaw: f32,
+    pub yaw: f32,
     #[br(little)]
-    yaw2: f32,
+    pub yaw2: f32,
     #[br(little)]
-    item_id: u16,
+    pub item_id: u16,
     #[br(little)]
-    model_index: u16,
+    pub model_index: u16,
     #[br(little)]
-    output_object_index: u32,
+    pub output_object_index: u32,
     #[br(little)]
-    input_object_index: u32,
-    output_to_slot: i8,
-    input_from_slot: i8,
-    output_from_slot: i8,
-    input_to_slot: i8,
-    output_offset: i8,
-    input_offset: i8,
+    pub input_object_index: u32,
+    pub output_to_slot: i8,
+    pub input_from_slot: i8,
+    pub output_from_slot: i8,
+    pub input_to_slot: i8,
+    pub output_offset: i8,
+    pub input_offset: i8,
     #[br(little)]
-    recipe_id: u16,
+    pub recipe_id: u16,
     #[br(little)]
-    filter_id: u16,
+    pub filter_id: u16,
     #[br(little)]
-    parameter_count: u16,
+    pub parameter_count: u16,
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
 pub struct Building {
-    header: BuildingHeader,
+    pub header: BuildingHeader,
     #[br(args { param_count: header.parameter_count as usize, building: header.item_id })]
-    param: BuildingParam,
+    pub param: BuildingParam,
+}
+
+impl Building {
+    pub fn kind(&self) -> Result<DSPItem, TryFromPrimitiveError<DSPItem>> {
+        DSPItem::try_from(self.header.item_id)
+    }
 }
 
 impl ReplaceItem for Building {

@@ -18,13 +18,13 @@ use crate::md5::{Algo, MD5Hash, MD5};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 pub struct Blueprint {
-    layout: u32,
-    icons: [u32; 5],
-    timestamp: u64,
-    game_version: String,
-    icon_text: String,
-    desc: String,
-    data: BlueprintData,
+    pub layout: u32,
+    pub icons: [u32; 5],
+    pub timestamp: u64,
+    pub game_version: String,
+    pub icon_text: String,
+    pub desc: String,
+    pub data: BlueprintData,
 }
 
 impl Blueprint {

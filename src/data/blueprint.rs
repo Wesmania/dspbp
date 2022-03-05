@@ -34,13 +34,13 @@ pub struct Header {
 #[derive(BinRead, BinWrite)]
 pub struct BlueprintData {
     #[br(assert(header.version == 1))]
-    header: Header,
+    pub header: Header,
     #[br(count = header.area_count)]
-    areas: Vec<Area>,
+    pub areas: Vec<Area>,
     #[br(little)]
-    building_count: u32,
+    pub building_count: u32,
     #[br(count = building_count)]
-    buildings: Vec<Building>,
+    pub buildings: Vec<Building>,
 }
 
 impl ReplaceItem for BlueprintData {
