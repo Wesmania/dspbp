@@ -121,3 +121,24 @@ impl GetStats for Station {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{testutil::get_file, blueprint::Blueprint};
+
+    #[test]
+    fn example_station_1() {
+        let bp_file = "Example interstellar station 1.txt";
+        let f = get_file(bp_file);
+        let bp = Blueprint::new(std::str::from_utf8(&f).unwrap()).unwrap();
+        let description =
+            "Example station 1.\n\
+            * Wares: blue/red/yellow/purple/green cubes.\n\
+            * 3 drones, 2 ships, 1 warper.\n\
+            * 60MW charging power. 50 degrees drone range. 6 ly vessel range. 2AU warp activation. \
+            20% min drone load. 40% min vessel load. Orbital collector on. Warpers required on.\n\
+            * Slots all out. From north leftmost clockwise: blue-red-red, \
+            blue-yellow-yellow, blue-purple-purple, blue-green-green.";
+        assert!(&bp.get_description().unwrap() == description);
+    }
+}

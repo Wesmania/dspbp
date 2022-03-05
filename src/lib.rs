@@ -15,6 +15,8 @@ mod error;
 mod md5;
 mod serialize;
 mod stats;
+#[cfg(test)]
+mod testutil;
 
 fn iof(arg: &Option<String>) -> Option<&str> {
     match arg.as_ref().map(|x| x.as_ref()) {
