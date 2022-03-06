@@ -135,13 +135,17 @@ impl GetStats for Station {
 
 #[cfg(test)]
 mod test {
+    use std::io::Cursor;
+
+    use binrw::BinWrite;
+
     use crate::{testutil::get_file, blueprint::Blueprint, data::{enums::DSPItem, building::BuildingParam, station::StationHeader}};
 
     #[test]
     fn example_station_1() {
         let bp_file = "Example interstellar station 1.txt";
         let f = get_file(bp_file);
-        let bp = Blueprint::new(std::str::from_utf8(&f).unwrap()).unwrap();
+        let (bp, raw) = Blueprint::new_with_raw_bp(std::str::from_utf8(&f).unwrap()).unwrap();
         // Drones / ships / warpers part is irrelevant, not kept in blueprint.
         let description =
             "Example station 1.\n\
@@ -185,5 +189,10 @@ mod test {
                            5, 5, 1,
                            4, 4, 1,
                            3, 3, 1]);
+
+        // Can't compare whole blueprints since gzip isn't really reproducible.
+        let mut back = vec![];
+        bp.data.write_to(&mut Cursor::new(&mut back)).unwrap();
+        assert_eq!(raw, back);
     }
 }

@@ -32,14 +32,15 @@ impl Blueprint {
         str::parse(data).map_err(|_| format!("Failed to parse {}", what).into())
     }
 
-    fn unpack_data(b64data: &str) -> anyhow::Result<BlueprintData> {
+    fn unpack_data(b64data: &str) -> anyhow::Result<(BlueprintData, Vec<u8>)> {
         let zipped_data =
             base64::decode(b64data).map_err(|_| some_error("Failed to base64 decode blueprint"))?;
         let mut d = GzDecoder::new(zipped_data.as_slice());
         let mut data = vec![];
         d.read_to_end(&mut data)?;
-
-        Ok(Cursor::new(data).read_le()?)
+        let mut c = Cursor::new(data);
+        let out = c.read_le()?;
+        Ok((out, c.into_inner()))
     }
 
     fn hash_str_to_hash(d: &str) -> anyhow::Result<MD5Hash> {
@@ -72,6 +73,11 @@ impl Blueprint {
     }
 
     pub fn new(data: &str) -> anyhow::Result<Self> {
+        let (me, _) = Self::new_with_raw_bp(data)?;
+        Ok(me)
+    }
+
+    pub fn new_with_raw_bp(data: &str) -> anyhow::Result<(Self, Vec<u8>)> {
         let data_and_hash: Vec<&str> = data.rsplitn(2, "\"").collect();
         if data_and_hash.len() != 2 {
             return Err(some_error("Did not find hash delimiter"));
@@ -129,9 +135,9 @@ impl Blueprint {
             return Err(some_error("fixed0_2 is not 0"));
         }
 
-        let data = Self::unpack_data(b64data)?;
+        let (data, raw_bp) = Self::unpack_data(b64data)?;
 
-        Ok(Self {
+        Ok((Self {
             layout,
             icons: icons.try_into().unwrap(),
             timestamp,
@@ -139,7 +145,7 @@ impl Blueprint {
             icon_text: icon_text.into(),
             desc: desc.into(),
             data,
-        })
+        }, raw_bp))
     }
 
     pub fn into_bp_string(&self) -> anyhow::Result<String> {
