@@ -147,17 +147,20 @@ pub fn cmdline() -> anyhow::Result<()> {
             output.write_all(bp.into_bp_string()?.as_bytes())?;
             output.flush_if_stdout()?;
         }
-        Commands::Edit => {
+        Commands::Edit(eargs) => {
             let mut input = input()?;
             let mut output = output()?;
             let mut bp = itob(&mut input)?;
-            if let Some(i) = args.replace_item {
+            if let Some(i) = eargs.replace_item {
                 let replace = parse_into_enum_map::<DSPItem>(&i)?;
                 bp.replace_item(&replace);
             }
-            if let Some(i) = args.replace_recipe {
+            if let Some(i) = eargs.replace_recipe {
                 let replace = parse_into_enum_map::<DSPRecipe>(&i)?;
                 bp.replace_recipe(&replace);
+            }
+            if let Some(i) = eargs.icon_text {
+                bp.icon_text = i;
             }
             output.write_all(bp.into_bp_string()?.as_bytes())?;
             output.flush_if_stdout()?;

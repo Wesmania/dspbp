@@ -12,6 +12,11 @@ pub struct Args {
     /// Output file. If absent or '-', writes to standard output.
     #[clap(short, long)]
     pub output: Option<String>,
+}
+
+#[derive(Parser, Debug)]
+#[clap()]
+pub struct EditArgs {
     /// Replace items with other items.
     /// Accepts format like this: "Item1:Replacement1,Item2:Replacement2,..."
     #[clap(short, long)]
@@ -20,6 +25,9 @@ pub struct Args {
     /// Accepts format like this: "Recipe1:Replacement1,Recipe2:Replacement2,..."
     #[clap(short='R', long)]
     pub replace_recipe: Option<String>,
+    /// Replace icon text.
+    #[clap(short='t', long)]
+    pub icon_text: Option<String>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -30,8 +38,8 @@ pub enum Commands {
     /// Undump blueprint from JSON to blueprint format.
     #[cfg(feature = "dump")]
     Undump,
-    /// Edit blueprint.
-    Edit,
+    /// Edit blueprint. Accepts more arguments.
+    Edit(EditArgs),
     /// Print some blueprint info.
     Info,
     /// Print item names.
