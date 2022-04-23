@@ -3,7 +3,7 @@ use std::io::{Read, Write, Cursor};
 use std::str::FromStr;
 
 use crate::data::blueprint::BlueprintData;
-use crate::data::enums::{DSPItem, DSPRecipe};
+use crate::data::enums::{DSPItem, DSPRecipe, DSPIcon};
 use crate::data::traits::{ReplaceItem, ReplaceRecipe, Replace};
 use crate::error::{some_error, Error};
 use crate::stats::{GetStats, Stats};
@@ -185,13 +185,27 @@ impl Blueprint {
 
 impl ReplaceItem for Blueprint {
     fn replace_item(&mut self, replace: &Replace<DSPItem>) {
-        self.data.replace_item(replace)
+        self.data.replace_item(replace);
+
+        for icon in self.icons.iter_mut() {
+            *icon = match DSPIcon::try_from(*icon) {
+                Ok(DSPIcon::Item(i)) => DSPIcon::Item(replace(i)).into(),
+                _ => *icon
+            };
+        }
     }
 }
 
 impl ReplaceRecipe for Blueprint {
     fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>) {
-        self.data.replace_recipe(replace)
+        self.data.replace_recipe(replace);
+
+        for icon in self.icons.iter_mut() {
+            *icon = match DSPIcon::try_from(*icon) {
+                Ok(DSPIcon::Recipe(i)) => DSPIcon::Recipe(replace(i)).into(),
+                _ => *icon
+            };
+        }
     }
 }
 

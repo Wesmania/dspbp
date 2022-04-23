@@ -288,3 +288,46 @@ pub enum DSPRecipe {
     AdvancedMiningMachine = 119,
     AutomaticPiler = 120,
 }
+
+#[derive(PartialEq, Eq, Clone, Copy, Hash)]
+pub enum DSPIcon {
+    Signal(u32),
+    Item(DSPItem),
+    Recipe(DSPRecipe),
+    Tech(u32),
+    Unknown(u32),
+}
+
+impl TryFrom<u32> for DSPIcon {
+    type Error = anyhow::Error;
+
+    fn try_from(n: u32) -> Result<Self, Self::Error> {
+        let me = if n < 1000 {
+            Self::Signal(n)
+        } else if n < 20000 {
+            Self::Item(DSPItem::try_from_primitive(n as u16)?)
+        } else if n < 40000 {
+            Self::Recipe(DSPRecipe::try_from_primitive((n - 20000) as u16)?)
+        } else if n < 60000 {
+            Self::Tech(n - 40000)
+        } else {
+            Self::Unknown(n)
+        };
+        Ok(me)
+    }
+}
+
+impl Into<u32> for DSPIcon {
+    fn into(self) -> u32 {
+        match self {
+            Self::Signal(v) => v,
+            Self::Item(v) => v.into(),
+            Self::Recipe(v) => {
+                let v: u16 = v.into();
+                v as u32 + 20000
+            },
+            Self::Tech(v) => v + 40000,
+            Self::Unknown(v) => v,
+        }
+    }
+}
