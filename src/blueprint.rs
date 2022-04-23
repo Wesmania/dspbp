@@ -1,10 +1,10 @@
 use std::fmt::Write as _;
-use std::io::{Read, Write, Cursor};
+use std::io::{Cursor, Read, Write};
 use std::str::FromStr;
 
 use crate::data::blueprint::BlueprintData;
-use crate::data::enums::{DSPItem, DSPRecipe, DSPIcon};
-use crate::data::traits::{ReplaceItem, ReplaceRecipe, Replace};
+use crate::data::enums::{DSPIcon, DSPItem, DSPRecipe};
+use crate::data::traits::{Replace, ReplaceItem, ReplaceRecipe};
 use crate::error::{some_error, Error};
 use crate::stats::{GetStats, Stats};
 use binrw::{BinReaderExt, BinWrite};
@@ -137,15 +137,18 @@ impl Blueprint {
 
         let (data, raw_bp) = Self::unpack_data(b64data)?;
 
-        Ok((Self {
-            layout,
-            icons: icons.try_into().unwrap(),
-            timestamp,
-            game_version: game_version.into(),
-            icon_text: icon_text.into(),
-            desc: desc.into(),
-            data,
-        }, raw_bp))
+        Ok((
+            Self {
+                layout,
+                icons: icons.try_into().unwrap(),
+                timestamp,
+                game_version: game_version.into(),
+                icon_text: icon_text.into(),
+                desc: desc.into(),
+                data,
+            },
+            raw_bp,
+        ))
     }
 
     pub fn into_bp_string(&self) -> anyhow::Result<String> {
@@ -190,7 +193,7 @@ impl ReplaceItem for Blueprint {
         for icon in self.icons.iter_mut() {
             *icon = match DSPIcon::try_from(*icon) {
                 Ok(DSPIcon::Item(i)) => DSPIcon::Item(replace(i)).into(),
-                _ => *icon
+                _ => *icon,
             };
         }
     }
@@ -203,7 +206,7 @@ impl ReplaceRecipe for Blueprint {
         for icon in self.icons.iter_mut() {
             *icon = match DSPIcon::try_from(*icon) {
                 Ok(DSPIcon::Recipe(i)) => DSPIcon::Recipe(replace(i)).into(),
-                _ => *icon
+                _ => *icon,
             };
         }
     }

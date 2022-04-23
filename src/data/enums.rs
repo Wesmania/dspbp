@@ -1,7 +1,18 @@
-use num_enum::{TryFromPrimitive, IntoPrimitive};
-use strum::{EnumString, AsRefStr, EnumIter};
+use num_enum::{IntoPrimitive, TryFromPrimitive};
+use strum::{AsRefStr, EnumIter, EnumString};
 
-#[derive(TryFromPrimitive, IntoPrimitive, EnumString, EnumIter, AsRefStr, PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(
+    TryFromPrimitive,
+    IntoPrimitive,
+    EnumString,
+    EnumIter,
+    AsRefStr,
+    PartialEq,
+    Eq,
+    Clone,
+    Copy,
+    Hash,
+)]
 #[repr(u16)]
 pub enum DSPItem {
     IronOre = 1001,
@@ -148,24 +159,35 @@ impl DSPItem {
             Self::ConveyorBeltMKI,
             Self::ConveyorBeltMKII,
             Self::ConveyorBeltMKIII,
-        ].contains(self)
+        ]
+        .contains(self)
     }
 
     pub fn is_station(&self) -> bool {
         [
             Self::PlanetaryLogisticsStation,
             Self::InterstellarLogisticsStation,
-        ].contains(self)
+        ]
+        .contains(self)
     }
 
     pub fn is_interstellar_station(&self) -> bool {
-        [
-            Self::InterstellarLogisticsStation,
-        ].contains(self)
+        [Self::InterstellarLogisticsStation].contains(self)
     }
 }
 
-#[derive(TryFromPrimitive, IntoPrimitive, EnumString, EnumIter, AsRefStr, PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(
+    TryFromPrimitive,
+    IntoPrimitive,
+    EnumString,
+    EnumIter,
+    AsRefStr,
+    PartialEq,
+    Eq,
+    Clone,
+    Copy,
+    Hash,
+)]
 #[repr(u16)]
 pub enum DSPRecipe {
     Gear = 5,
@@ -289,6 +311,12 @@ pub enum DSPRecipe {
     AutomaticPiler = 120,
 }
 
+impl DSPRecipe {
+    pub fn for_item(item: &DSPItem) -> Option<Self> {
+        Self::try_from(item.as_ref()).ok()
+    }
+}
+
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub enum DSPIcon {
     Signal(u32),
@@ -325,7 +353,7 @@ impl Into<u32> for DSPIcon {
             Self::Recipe(v) => {
                 let v: u16 = v.into();
                 v as u32 + 20000
-            },
+            }
             Self::Tech(v) => v + 40000,
             Self::Unknown(v) => v,
         }

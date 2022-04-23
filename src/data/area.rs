@@ -1,4 +1,4 @@
-use binrw::{BinWrite, BinRead};
+use binrw::{BinRead, BinWrite};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 

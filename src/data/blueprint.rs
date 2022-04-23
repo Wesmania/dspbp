@@ -1,14 +1,16 @@
-use binrw::{BinWrite, BinRead};
+use binrw::{BinRead, BinWrite};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
-
 
 use crate::{
     data::{area::Area, building::Building},
     stats::{GetStats, Stats},
 };
 
-use super::{traits::{ReplaceItem, ReplaceRecipe, Replace}, enums::{DSPItem, DSPRecipe}};
+use super::{
+    enums::{DSPItem, DSPRecipe},
+    traits::{Replace, ReplaceItem, ReplaceRecipe},
+};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]

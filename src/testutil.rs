@@ -1,4 +1,4 @@
-use std::{path::PathBuf, fs::File, io::Read};
+use std::{fs::File, io::Read, path::PathBuf};
 
 pub fn get_file(f: &str) -> Vec<u8> {
     let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

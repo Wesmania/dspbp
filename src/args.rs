@@ -23,10 +23,17 @@ pub struct EditArgs {
     pub replace_item: Option<String>,
     /// Replace recipes with other recipes.
     /// Accepts format like this: "Recipe1:Replacement1,Recipe2:Replacement2,..."
-    #[clap(short='R', long)]
+    #[clap(short = 'R', long)]
     pub replace_recipe: Option<String>,
+    /// Replace items with other items, also replacing their recipes.
+    ///
+    /// When there are multiple recipes available, chooses the most basic recipe.
+    /// Replacements are overwritten by only-item and only-recipe replacements.
+    /// Accepts format like this: "Item1:Replacement1,Item2:Replacement2,..."
+    #[clap(short = 'B', long)]
+    pub replace_both: Option<String>,
     /// Replace icon text.
-    #[clap(short='t', long)]
+    #[clap(short = 't', long)]
     pub icon_text: Option<String>,
 }
 

@@ -4,8 +4,13 @@ use strum::ParseError;
 
 use super::enums::{DSPItem, DSPRecipe};
 
-pub trait DSPEnum: Eq + Copy + Hash + for<'a> TryFrom<&'a str, Error = ParseError> +
-                   TryFrom<Self::Underlying> + Into<Self::Underlying>
+pub trait DSPEnum:
+    Eq
+    + Copy
+    + Hash
+    + for<'a> TryFrom<&'a str, Error = ParseError>
+    + TryFrom<Self::Underlying>
+    + Into<Self::Underlying>
 {
     type Underlying: Copy;
 }
@@ -34,21 +39,20 @@ macro_rules! from_into_boilerplate {
             }
         }
 
-        impl TryInto<$enum> for $t {
+        impl TryFrom<$t> for $enum {
             type Error = anyhow::Error;
 
-            fn try_into(self) -> Result<$enum, Self::Error> {
-                Ok(<$ul>::try_from(self)?.try_into()?)
+            fn try_from(v: $t) -> Result<Self, Self::Error> {
+                Ok(<$ul>::try_from(v)?.try_into()?)
             }
         }
-    }
+    };
 }
 
 from_into_boilerplate!(u32, u16, DSPItem);
 from_into_boilerplate!(u32, u16, DSPRecipe);
 
-impl<T: TryInto<DSPItem> + From<DSPItem> + Copy> ReplaceItem for T
-{
+impl<T: TryInto<DSPItem> + From<DSPItem> + Copy> ReplaceItem for T {
     fn replace_item(&mut self, replace: &Replace<DSPItem>) {
         let my_item = match (*self).try_into() {
             Ok(l) => l,
@@ -58,8 +62,7 @@ impl<T: TryInto<DSPItem> + From<DSPItem> + Copy> ReplaceItem for T
     }
 }
 
-impl<T: TryInto<DSPRecipe> + From<DSPRecipe> + Copy> ReplaceRecipe for T
-{
+impl<T: TryInto<DSPRecipe> + From<DSPRecipe> + Copy> ReplaceRecipe for T {
     fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>) {
         let my_item = match (*self).try_into() {
             Ok(l) => l,

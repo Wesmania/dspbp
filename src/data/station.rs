@@ -1,22 +1,25 @@
 use std::f64::consts::PI;
 
-use binrw::{BinWrite, BinRead};
+use binrw::{BinRead, BinWrite};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
 use crate::stats::{GetStats, Stats};
 
-use super::{traits::{ReplaceItem, Replace}, enums::DSPItem};
+use super::{
+    enums::DSPItem,
+    traits::{Replace, ReplaceItem},
+};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
 pub struct StationHeader {
     #[br(little)]
-    pub work_energy_per_tick: u32,  // In watts. 1M is 60MW/s.
+    pub work_energy_per_tick: u32, // In watts. 1M is 60MW/s.
     #[br(little)]
-    pub drone_range: u32,   // cos(angle) * 10^8
+    pub drone_range: u32, // cos(angle) * 10^8
     #[br(little)]
-    pub vessel_range: u32,  // 1LY = 24000
+    pub vessel_range: u32, // 1LY = 24000
     #[br(little)]
     pub orbital_collector: u32,
     #[br(little)]
@@ -86,11 +89,11 @@ pub struct Station {
     pub unknown1: Vec<u32>,
 
     #[br(count = 12)]
-    pub slots: Vec<StationSlots>,       // Counter-clockwise, from rightmost north.
+    pub slots: Vec<StationSlots>, // Counter-clockwise, from rightmost north.
     #[br(count = 320 - 192 - 48)]
     pub unknown2: Vec<u32>,
 
-    pub header: StationHeader,                  // 320
+    pub header: StationHeader, // 320
     #[br(count = 2048 - 320 - 9)]
     pub unknown3: Vec<u32>,
 }
@@ -139,7 +142,11 @@ mod test {
 
     use binrw::BinWrite;
 
-    use crate::{testutil::get_file, blueprint::Blueprint, data::{enums::DSPItem, building::BuildingParam, station::StationHeader}};
+    use crate::{
+        blueprint::Blueprint,
+        data::{building::BuildingParam, enums::DSPItem, station::StationHeader},
+        testutil::get_file,
+    };
 
     #[test]
     fn example_station_1() {
@@ -147,8 +154,7 @@ mod test {
         let f = get_file(bp_file);
         let (bp, raw) = Blueprint::new_with_raw_bp(std::str::from_utf8(&f).unwrap()).unwrap();
         // Drones / ships / warpers part is irrelevant, not kept in blueprint.
-        let description =
-            "Example station 1.\n\
+        let description = "Example station 1.\n\
             * Wares: blue/red/yellow/purple/green cubes.\n\
             * 3 drones, 2 ships, 1 warper.\n\
             * 60MW charging power. 50 degrees drone range. 6 ly vessel range. 2AU warp activation. \
@@ -157,7 +163,10 @@ mod test {
             blue-yellow-yellow, blue-purple-purple, blue-green-green.";
         assert_eq!(&bp.get_description().unwrap(), description);
 
-        let station = bp.data.buildings.iter()
+        let station = bp
+            .data
+            .buildings
+            .iter()
             .find(|b| b.kind() == Ok(DSPItem::InterstellarLogisticsStation))
             .unwrap();
         let station = match &station.param {
@@ -173,7 +182,7 @@ mod test {
         assert_eq!(sto[4].item_id, DSPItem::GravityMatrix as u32);
 
         let h = &station.header;
-        assert_eq!(h.work_energy_per_tick, 1000_000);   // 1 MW per tick, 60 MW per second
+        assert_eq!(h.work_energy_per_tick, 1000_000); // 1 MW per tick, 60 MW per second
         assert_eq!(h.drone_range, StationHeader::angle_to_drone_range(50));
         assert_eq!(h.vessel_range, (StationHeader::LY * 6) as u32);
         assert_eq!(h.orbital_collector, 1);
@@ -185,10 +194,7 @@ mod test {
 
         let s = &station.slots;
         let idx: Vec<u32> = s.iter().map(|x| x.storage_index).collect();
-        assert_eq!(&idx, &[2, 2, 1,
-                           5, 5, 1,
-                           4, 4, 1,
-                           3, 3, 1]);
+        assert_eq!(&idx, &[2, 2, 1, 5, 5, 1, 4, 4, 1, 3, 3, 1]);
 
         // Can't compare whole blueprints since gzip isn't really reproducible.
         let mut back = vec![];

@@ -1,8 +1,11 @@
-use binrw::{BinWrite, BinRead};
+use binrw::{BinRead, BinWrite};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
-use super::{traits::{ReplaceItem, Replace}, enums::DSPItem};
+use super::{
+    enums::DSPItem,
+    traits::{Replace, ReplaceItem},
+};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]

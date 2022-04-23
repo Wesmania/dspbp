@@ -1,5 +1,5 @@
-use std::{collections::HashMap, fmt::Display, hash::Hash};
 use crate::data::enums::{DSPItem, DSPRecipe};
+use std::{collections::HashMap, fmt::Display, hash::Hash};
 
 #[derive(Default)]
 pub struct Stats {
@@ -17,12 +17,15 @@ impl Stats {
         match map.get_mut(&i) {
             None => {
                 map.insert(i, 1);
-            },
+            }
             Some(n) => *n += 1,
         }
     }
 
-    fn printmap<T: Eq + Hash + AsRef<str>>(f: &mut std::fmt::Formatter<'_>, map: &HashMap<T, usize>) -> std::fmt::Result {
+    fn printmap<T: Eq + Hash + AsRef<str>>(
+        f: &mut std::fmt::Formatter<'_>,
+        map: &HashMap<T, usize>,
+    ) -> std::fmt::Result {
         for (item, count) in map {
             if *count == 0 {
                 continue;

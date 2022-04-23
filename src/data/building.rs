@@ -1,4 +1,4 @@
-use binrw::{BinWrite, BinRead};
+use binrw::{BinRead, BinWrite};
 use num_enum::TryFromPrimitiveError;
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,7 @@ use super::{
     belt::Belt,
     enums::{DSPItem, DSPRecipe},
     station::Station,
-    traits::{ReplaceItem, ReplaceRecipe, Replace},
+    traits::{Replace, ReplaceItem, ReplaceRecipe},
 };
 
 fn b_is(i: u16, f: fn(&DSPItem) -> bool) -> bool {
@@ -24,18 +24,18 @@ pub enum BuildingParam {
     #[br(pre_assert(b_is(building, DSPItem::is_station)))]
     Station(
         #[br(args { is_interstellar: b_is(building, DSPItem::is_interstellar_station), param_count: param_count })]
-        Station
+         Station,
     ),
     #[br(pre_assert(b_is(building, DSPItem::is_belt)))]
     Belt(
         #[br(if(param_count != 0))]
         #[br(args(param_count))]
-        Option<Belt>
+        Option<Belt>,
     ),
     Unknown(
         #[br(count = param_count)]
         #[br(little)]
-        Vec<u32>
+        Vec<u32>,
     ),
 }
 
