@@ -104,28 +104,34 @@ fn parse_into_enum_map<T: DSPEnum + 'static>(s: &str) -> anyhow::Result<Box<Repl
 pub fn cmdline() -> anyhow::Result<()> {
     let args = args::Args::parse();
 
-    let mut input: Box<dyn ReadPlusSeek> = match iof(&args.input) {
-        None => {
-            let mut all_input = vec![];
-            std::io::stdin().read_to_end(&mut all_input)?;
-            Box::new(Cursor::new(all_input))
-        },
-        Some(file) => Box::new(std::fs::File::open(file)?),
+    let input = || -> anyhow::Result<Box<dyn ReadPlusSeek>> {
+        match iof(&args.input) {
+            None => {
+                let mut all_input = vec![];
+                std::io::stdin().read_to_end(&mut all_input)?;
+                Ok(Box::new(Cursor::new(all_input)))
+            },
+            Some(file) => Ok(Box::new(std::fs::File::open(file)?)),
+        }
     };
-    let mut output: WriteSeek = match iof(&args.output) {
-        None => WriteSeek::BufOut(Cursor::new(vec![]), std::io::stdout()),
-        Some(file) => WriteSeek::File(
-            std::fs::OpenOptions::new()
-                .write(true)
-                .truncate(true)
-                .create(true)
-                .open(file)?,
-        ),
+    let output = || -> anyhow::Result<WriteSeek> {
+        match iof(&args.output) {
+            None => Ok(WriteSeek::BufOut(Cursor::new(vec![]), std::io::stdout())),
+            Some(file) => Ok(WriteSeek::File(
+                std::fs::OpenOptions::new()
+                    .write(true)
+                    .truncate(true)
+                    .create(true)
+                    .open(file)?),
+            ),
+        }
     };
 
     match args.command {
         #[cfg(feature = "dump")]
         Commands::Dump => {
+            let mut input = input()?;
+            let mut output = output()?;
             let bp = itob(&mut input)?;
             output.write_all(&bp.dump_json()?)?;
             output.flush_if_stdout()?;
@@ -133,6 +139,8 @@ pub fn cmdline() -> anyhow::Result<()> {
         #[cfg(feature = "dump")]
         Commands::Undump => {
             let mut data = vec![];
+            let mut input = input()?;
+            let mut output = output()?;
             input.read_to_end(&mut data)?;
             let data = String::from_utf8(data)?;
             let bp = Blueprint::new_from_json(&data)?;
@@ -140,6 +148,8 @@ pub fn cmdline() -> anyhow::Result<()> {
             output.flush_if_stdout()?;
         }
         Commands::Edit => {
+            let mut input = input()?;
+            let mut output = output()?;
             let mut bp = itob(&mut input)?;
             if let Some(i) = args.replace_item {
                 let replace = parse_into_enum_map::<DSPItem>(&i)?;
@@ -153,6 +163,7 @@ pub fn cmdline() -> anyhow::Result<()> {
             output.flush_if_stdout()?;
         }
         Commands::Info => {
+            let mut input = input()?;
             let bp = itob(&mut input)?;
             println!("{}", bp.get_description()?);
             let mut stats = Stats::new();
