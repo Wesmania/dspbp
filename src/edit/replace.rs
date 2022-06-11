@@ -4,17 +4,21 @@ pub type Replace<T> = dyn Fn(T) -> T;
 
 pub struct ReplaceItem<'a>(&'a Replace<DSPItem>);
 
+fn ri<T: TryInto<DSPItem> + From<DSPItem> + Copy>(s: &Replace<DSPItem>, t: &mut T) {
+    let my_item = match (*t).try_into() {
+        Ok(l) => l,
+        _ => return,
+    };
+    *t = s(my_item).into();
+}
+
 impl<'a> ReplaceItem<'a> {
     pub fn new(f: &'a Replace<DSPItem>) -> Self {
         Self(f)
     }
 
     fn replace_item<T: TryInto<DSPItem> + From<DSPItem> + Copy>(&self, t: &mut T) {
-        let my_item = match (*t).try_into() {
-            Ok(l) => l,
-            _ => return,
-        };
-        *t = (self.0)(my_item).into();
+        ri(self.0, t)
     }
 }
 
@@ -94,6 +98,56 @@ impl<'a> Visitor for ReplaceRecipe<'a> {
 
     fn visit_building(&mut self, v: &mut crate::data::building::Building) {
         self.replace_recipe(&mut v.header.recipe_id);
+        v.visit(self)
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum BuildingClass {
+    Assembler,
+    Belt,
+    Sorter,
+    Other
+}
+
+impl BuildingClass {
+    pub fn replacement_is_valid(i: DSPItem, o: DSPItem) -> bool {
+        return Self::from(i) == Self::from(o) && Self::from(i) != Self::Other
+    }
+}
+
+impl From<DSPItem> for BuildingClass {
+    fn from(i: DSPItem) -> Self {
+        match i {
+            DSPItem::AssemblingMachineMkI => Self::Assembler,
+            DSPItem::AssemblingMachineMkII => Self::Assembler,
+            DSPItem::AssemblingMachineMkIII => Self::Assembler,
+            DSPItem::SorterMKI => Self::Sorter,
+            DSPItem::SorterMKII => Self::Sorter,
+            DSPItem::SorterMKIII => Self::Sorter,
+            DSPItem::ConveyorBeltMKI => Self::Belt,
+            DSPItem::ConveyorBeltMKII => Self::Belt,
+            DSPItem::ConveyorBeltMKIII => Self::Belt,
+            _ => Self::Other,
+        }
+    }
+}
+
+pub struct ReplaceBuilding<'a>(&'a Replace<DSPItem>);
+
+impl<'a> ReplaceBuilding<'a> {
+    pub fn new(f: &'a Replace<DSPItem>) -> Self {
+        Self(f)
+    }
+
+    fn replace_building<T: TryInto<DSPItem> + From<DSPItem> + Copy>(&self, t: &mut T) {
+        ri(self.0, t);
+    }
+}
+
+impl<'a> Visitor for ReplaceBuilding<'a> {
+    fn visit_building(&mut self, v: &mut crate::data::building::Building) {
+        self.replace_building(&mut v.header.item_id);
         v.visit(self)
     }
 }

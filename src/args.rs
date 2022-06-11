@@ -32,6 +32,11 @@ pub struct EditArgs {
     /// Accepts format like this: "Item1:Replacement1,Item2:Replacement2,..."
     #[clap(short = 'B', long)]
     pub replace_both: Option<String>,
+    /// Upgrade/downgrade buildings.
+    ///
+    /// Accepts format like this: "Building1:Replacement1,Building2:Replacement2,..."
+    #[clap(short = 'b', long)]
+    pub replace_building: Option<String>,
     /// Replace icon text.
     #[clap(short = 't', long)]
     pub icon_text: Option<String>,

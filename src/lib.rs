@@ -5,7 +5,7 @@ use data::{
     enums::{DSPItem, DSPRecipe},
     traits::DSPEnum,
 };
-use edit::replace::{ReplaceItem, ReplaceRecipe, Replace};
+use edit::replace::{ReplaceItem, ReplaceRecipe, Replace, BuildingClass, ReplaceBuilding};
 use error::some_error;
 use std::{
     collections::HashMap,
@@ -169,6 +169,7 @@ pub fn cmdline() -> anyhow::Result<()> {
 
             let mut item_replace = HashMap::new();
             let mut recipe_replace = HashMap::new();
+            let mut building_replace = HashMap::new();
 
             // This goes first so it can be overwritten.
             if let Some(i) = eargs.replace_both {
@@ -193,6 +194,17 @@ pub fn cmdline() -> anyhow::Result<()> {
                 recipe_replace.extend(r.drain());
             }
 
+            if let Some(i) = eargs.replace_building {
+                let mut r = parse_into_enum_map::<DSPItem>(&i)?;
+                for (k, v) in r.iter() {
+                    if !BuildingClass::replacement_is_valid(*k, *v) {
+                        let e: crate::error::Error = format!("Cannot replace buildings: {} -> {}", k.as_ref(), v.as_ref()).into();
+                        return Err(e.into());
+                    }
+                }
+                building_replace.extend(r.drain());
+            }
+
             if !item_replace.is_empty() {
                 let m = map_using_map(item_replace);
                 let mut r = ReplaceItem::new(&m);
@@ -201,6 +213,12 @@ pub fn cmdline() -> anyhow::Result<()> {
             if !recipe_replace.is_empty() {
                 let m = map_using_map(recipe_replace);
                 let mut r = ReplaceRecipe::new(&m);
+                r.visit_blueprint(&mut bp);
+            }
+
+            if !building_replace.is_empty() {
+                let m = map_using_map(building_replace);
+                let mut r = ReplaceBuilding::new(&m);
                 r.visit_blueprint(&mut bp);
             }
 
