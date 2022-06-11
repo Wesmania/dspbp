@@ -110,7 +110,6 @@ impl Building {
 
 impl ReplaceItem for Building {
     fn replace_item(&mut self, replace: &Replace<DSPItem>) {
-        self.header.item_id.replace_item(replace);
         self.param.replace_item(replace);
     }
 }
