@@ -3,8 +3,9 @@ use blueprint::Blueprint;
 use clap::StructOpt;
 use data::{
     enums::{DSPItem, DSPRecipe},
-    traits::{DSPEnum, Replace, ReplaceItem, ReplaceRecipe},
+    traits::DSPEnum,
 };
+use edit::replace::{ReplaceItem, ReplaceRecipe, Replace};
 use error::some_error;
 use std::{
     collections::HashMap,
@@ -13,17 +14,18 @@ use std::{
 };
 use strum::{IntoEnumIterator, ParseError};
 
-use crate::stats::{GetStats, Stats};
+use crate::{edit::stats::GetStats, data::visit::Visitor};
 
-mod args;
-mod blueprint;
-mod data;
-mod error;
-mod md5;
-mod serialize;
-mod stats;
+pub(crate) mod args;
+pub(crate) mod blueprint;
+pub(crate) mod data;
+pub(crate) mod edit;
+pub(crate) mod error;
+pub(crate) mod md5;
+pub(crate) mod serialize;
+pub(crate) mod stats;
 #[cfg(test)]
-mod testutil;
+pub(crate) mod testutil;
 
 fn iof(arg: &Option<String>) -> Option<&str> {
     match arg.as_ref().map(|x| x.as_ref()) {
@@ -192,10 +194,14 @@ pub fn cmdline() -> anyhow::Result<()> {
             }
 
             if !item_replace.is_empty() {
-                bp.replace_item(&map_using_map(item_replace));
+                let m = map_using_map(item_replace);
+                let mut r = ReplaceItem::new(&m);
+                r.visit_blueprint(&mut bp);
             }
             if !recipe_replace.is_empty() {
-                bp.replace_recipe(&map_using_map(recipe_replace));
+                let m = map_using_map(recipe_replace);
+                let mut r = ReplaceRecipe::new(&m);
+                r.visit_blueprint(&mut bp);
             }
 
             if let Some(i) = eargs.icon_text {
@@ -206,11 +212,11 @@ pub fn cmdline() -> anyhow::Result<()> {
         }
         Commands::Info => {
             let mut input = input()?;
-            let bp = itob(&mut input)?;
+            let mut bp = itob(&mut input)?;
             println!("{}", bp.get_description()?);
-            let mut stats = Stats::new();
-            bp.get_stats(&mut stats);
-            print!("{}", stats);
+            let mut stats = GetStats::new();
+            stats.visit_blueprint(&mut bp);
+            print!("{}", stats.0);
         }
         Commands::Items => {
             for e in DSPItem::iter() {

@@ -4,12 +4,7 @@ use binrw::{BinRead, BinWrite};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
-use crate::stats::{GetStats, Stats};
-
-use super::{
-    enums::DSPItem,
-    traits::{Replace, ReplaceItem},
-};
+use super::visit::{Visit, Visitor};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
@@ -56,6 +51,10 @@ pub struct StationSlots {
     pub unused2: u32,
 }
 
+impl Visit for StationSlots {
+    fn visit<T: Visitor + ?Sized>(&mut self, _visitor: &mut T) { }
+}
+
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
 pub struct StationStorage {
@@ -71,6 +70,10 @@ pub struct StationStorage {
     pub unused1: u32,
     #[br(little)]
     pub unused2: u32,
+}
+
+impl Visit for StationStorage {
+    fn visit<T: Visitor + ?Sized>(&mut self, _visitor: &mut T) { }
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
@@ -118,20 +121,13 @@ impl Station {
     }
 }
 
-impl ReplaceItem for Station {
-    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
-        for item in self.valid_storage_mut() {
-            item.item_id.replace_item(replace)
+impl Visit for Station {
+    fn visit<T: Visitor + ?Sized>(&mut self, visitor: &mut T) {
+        for s in self.valid_storage_mut() {
+            visitor.visit_station_storage(s);
         }
-    }
-}
-
-impl GetStats for Station {
-    fn get_stats(&self, stats: &mut Stats) {
-        for s in self.valid_storage() {
-            if let Ok(b) = s.item_id.try_into() {
-                stats.add_station_ware(b);
-            }
+        for s in self.slots.iter_mut() {
+            visitor.visit_station_slots(s);
         }
     }
 }

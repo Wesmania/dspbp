@@ -2,10 +2,7 @@ use binrw::{BinRead, BinWrite};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
-use super::{
-    enums::DSPItem,
-    traits::{Replace, ReplaceItem},
-};
+use super::visit::Visit;
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
@@ -13,13 +10,11 @@ use super::{
 #[br(pre_assert(param_count == 2))]
 pub struct Belt {
     #[br(little)]
-    label: u32,
+    pub label: u32,
     #[br(little)]
-    count: u32,
+    pub count: u32,
 }
 
-impl ReplaceItem for Belt {
-    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
-        self.label.replace_item(replace)
-    }
+impl Visit for Belt {
+    fn visit<T: super::visit::Visitor + ?Sized>(&mut self, _visitor: &mut T) { }
 }

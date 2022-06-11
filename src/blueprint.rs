@@ -3,10 +3,8 @@ use std::io::{Cursor, Read, Write};
 use std::str::FromStr;
 
 use crate::data::blueprint::BlueprintData;
-use crate::data::enums::{DSPIcon, DSPItem, DSPRecipe};
-use crate::data::traits::{Replace, ReplaceItem, ReplaceRecipe};
+use crate::data::visit::{Visit, Visitor};
 use crate::error::{some_error, Error};
-use crate::stats::{GetStats, Stats};
 use binrw::{BinReaderExt, BinWrite};
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
@@ -186,34 +184,8 @@ impl Blueprint {
     }
 }
 
-impl ReplaceItem for Blueprint {
-    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
-        self.data.replace_item(replace);
-
-        for icon in self.icons.iter_mut() {
-            *icon = match DSPIcon::try_from(*icon) {
-                Ok(DSPIcon::Item(i)) => DSPIcon::Item(replace(i)).into(),
-                _ => *icon,
-            };
-        }
-    }
-}
-
-impl ReplaceRecipe for Blueprint {
-    fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>) {
-        self.data.replace_recipe(replace);
-
-        for icon in self.icons.iter_mut() {
-            *icon = match DSPIcon::try_from(*icon) {
-                Ok(DSPIcon::Recipe(i)) => DSPIcon::Recipe(replace(i)).into(),
-                _ => *icon,
-            };
-        }
-    }
-}
-
-impl GetStats for Blueprint {
-    fn get_stats(&self, stats: &mut Stats) {
-        self.data.get_stats(stats)
+impl Visit for Blueprint {
+    fn visit<T: Visitor + ?Sized>(&mut self, visitor: &mut T) {
+        visitor.visit_blueprint_data(&mut self.data)
     }
 }

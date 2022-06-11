@@ -3,13 +3,11 @@ use num_enum::TryFromPrimitiveError;
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
-use crate::stats::{GetStats, Stats};
-
 use super::{
     belt::Belt,
-    enums::{DSPItem, DSPRecipe},
+    enums::DSPItem,
     station::Station,
-    traits::{Replace, ReplaceItem, ReplaceRecipe},
+    visit::{Visit, Visitor},
 };
 
 fn b_is(i: u16, f: fn(&DSPItem) -> bool) -> bool {
@@ -37,17 +35,6 @@ pub enum BuildingParam {
         #[br(little)]
         Vec<u32>,
     ),
-}
-
-impl ReplaceItem for BuildingParam {
-    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
-        let rep: &mut dyn ReplaceItem = match self {
-            Self::Station(s) => s,
-            Self::Belt(Some(b)) => b,
-            _ => return,
-        };
-        rep.replace_item(replace)
-    }
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
@@ -108,28 +95,12 @@ impl Building {
     }
 }
 
-impl ReplaceItem for Building {
-    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
-        self.param.replace_item(replace);
-    }
-}
-
-impl ReplaceRecipe for Building {
-    fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>) {
-        self.header.recipe_id.replace_recipe(replace)
-    }
-}
-
-impl GetStats for Building {
-    fn get_stats(&self, stats: &mut Stats) {
-        if let Ok(b) = self.header.item_id.try_into() {
-            stats.add_building(b);
-        }
-        if let Ok(b) = self.header.recipe_id.try_into() {
-            stats.add_recipe(b);
-        }
-        if let BuildingParam::Station(s) = &self.param {
-            s.get_stats(stats);
+impl Visit for Building {
+    fn visit<T: Visitor + ?Sized>(&mut self, visitor: &mut T) {
+        match &mut self.param {
+            BuildingParam::Station(s) => visitor.visit_station(s),
+            BuildingParam::Belt(Some(b)) => visitor.visit_belt(b),
+            _ => (),
         }
     }
 }

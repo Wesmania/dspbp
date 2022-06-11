@@ -61,7 +61,3 @@ impl Display for Stats {
         Ok(())
     }
 }
-
-pub trait GetStats {
-    fn get_stats(&self, stats: &mut Stats);
-}

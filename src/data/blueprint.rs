@@ -2,15 +2,9 @@ use binrw::{BinRead, BinWrite};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    data::{area::Area, building::Building},
-    stats::{GetStats, Stats},
-};
+use crate::data::{area::Area, building::Building};
 
-use super::{
-    enums::{DSPItem, DSPRecipe},
-    traits::{Replace, ReplaceItem, ReplaceRecipe},
-};
+use super::visit::{Visit, Visitor};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
@@ -45,26 +39,10 @@ pub struct BlueprintData {
     pub buildings: Vec<Building>,
 }
 
-impl ReplaceItem for BlueprintData {
-    fn replace_item(&mut self, replace: &Replace<DSPItem>) {
-        for building in &mut self.buildings {
-            building.replace_item(replace)
-        }
-    }
-}
-
-impl ReplaceRecipe for BlueprintData {
-    fn replace_recipe(&mut self, replace: &Replace<DSPRecipe>) {
-        for building in &mut self.buildings {
-            building.replace_recipe(replace)
-        }
-    }
-}
-
-impl GetStats for BlueprintData {
-    fn get_stats(&self, stats: &mut Stats) {
-        for building in &self.buildings {
-            building.get_stats(stats)
+impl Visit for BlueprintData {
+    fn visit<T: Visitor + ?Sized>(&mut self, visitor: &mut T) {
+        for b in self.buildings.iter_mut() {
+            visitor.visit_building(b)
         }
     }
 }
