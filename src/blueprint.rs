@@ -182,6 +182,10 @@ impl Blueprint {
     pub fn get_description(&self) -> anyhow::Result<String> {
         Ok(urlencoding::decode(&self.desc)?.into_owned())
     }
+
+    pub fn set_icon_text(&mut self, text: &str) {
+        self.icon_text = urlencoding::encode(text).into_owned();
+    }
 }
 
 impl Visit for Blueprint {

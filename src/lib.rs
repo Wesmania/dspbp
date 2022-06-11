@@ -205,7 +205,7 @@ pub fn cmdline() -> anyhow::Result<()> {
             }
 
             if let Some(i) = eargs.icon_text {
-                bp.icon_text = i;
+                bp.set_icon_text(&i);
             }
             output.write_all(bp.into_bp_string()?.as_bytes())?;
             output.flush_if_stdout()?;
