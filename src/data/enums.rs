@@ -1,5 +1,6 @@
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use strum::{AsRefStr, EnumIter, EnumString};
+use std::fmt::Debug;
 
 #[derive(
     TryFromPrimitive,
@@ -12,6 +13,7 @@ use strum::{AsRefStr, EnumIter, EnumString};
     Clone,
     Copy,
     Hash,
+    Debug,
 )]
 #[repr(u16)]
 pub enum DSPItem {
@@ -187,6 +189,7 @@ impl DSPItem {
     Clone,
     Copy,
     Hash,
+    Debug,
 )]
 #[repr(u16)]
 pub enum DSPRecipe {
@@ -317,7 +320,7 @@ impl DSPRecipe {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
 pub enum DSPIcon {
     Signal(u32),
     Item(DSPItem),
@@ -357,5 +360,32 @@ impl Into<u32> for DSPIcon {
             Self::Tech(v) => v + 40000,
             Self::Unknown(v) => v,
         }
+    }
+}
+
+#[derive(
+    TryFromPrimitive,
+    IntoPrimitive,
+    PartialEq,
+    Eq,
+    Clone,
+    Copy,
+    Hash,
+    Debug,
+)]
+#[repr(u16)]
+pub enum BPModel {
+    BeltMkI = 35,
+    BeltMkII = 36,
+}
+
+impl BPModel {
+    pub fn from_building(i: DSPItem) -> anyhow::Result<Self> {
+        let o = match i {
+            DSPItem::ConveyorBeltMKI => Self::BeltMkI,
+            DSPItem::ConveyorBeltMKII => Self::BeltMkII,
+            _ => anyhow::bail!("Building {:?} has no BP model", i),
+        };
+        Ok(o)
     }
 }

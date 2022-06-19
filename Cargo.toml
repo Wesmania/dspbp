@@ -16,6 +16,8 @@ num_enum = "*"
 serde_json = {version = "*", optional = true }
 strum = { version = "*", features = ["derive"] }
 urlencoding = "*"
+log = "*"
+simple_logger = "*"
 
 [features]
 default = ["dump"]

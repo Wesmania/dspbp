@@ -1,14 +1,20 @@
-use crate::data::{visit::{Visitor, Visit}, enums::{DSPIcon, DSPItem, DSPRecipe}};
+use crate::data::{visit::{Visitor, Visit}, enums::{DSPIcon, DSPItem, DSPRecipe, BPModel}, building::Building};
 
 pub type Replace<T> = dyn Fn(T) -> T;
 
 pub struct ReplaceItem<'a>(&'a Replace<DSPItem>);
 
-fn ri<T: TryInto<DSPItem> + From<DSPItem> + Copy>(s: &Replace<DSPItem>, t: &mut T) {
+fn ri<T: TryInto<DSPItem> + From<DSPItem> + Copy + std::fmt::Debug>(s: &Replace<DSPItem>, t: &mut T) {
     let my_item = match (*t).try_into() {
         Ok(l) => l,
-        _ => return,
+        _ => {
+            log::warn!("Unexpected DSP item value {:?}", *t);
+            return;
+        },
     };
+    if my_item == s(my_item) {
+        return;
+    }
     *t = s(my_item).into();
 }
 
@@ -17,7 +23,7 @@ impl<'a> ReplaceItem<'a> {
         Self(f)
     }
 
-    fn replace_item<T: TryInto<DSPItem> + From<DSPItem> + Copy>(&self, t: &mut T) {
+    fn replace_item<T: TryInto<DSPItem> + From<DSPItem> + Copy + std::fmt::Debug>(&self, t: &mut T) {
         ri(self.0, t)
     }
 }
@@ -140,14 +146,32 @@ impl<'a> ReplaceBuilding<'a> {
         Self(f)
     }
 
-    fn replace_building<T: TryInto<DSPItem> + From<DSPItem> + Copy>(&self, t: &mut T) {
-        ri(self.0, t);
+    fn replace_bp_model(&self, b: &mut Building, new: DSPItem) -> anyhow::Result<()> {
+        let new_model = BPModel::from_building(new)?;
+        b.header.model_index = new_model.into();
+        Ok(())
+    }
+
+    fn replace_building(&self, b: &mut Building) {
+        let my_item = match b.header.item_id.try_into() {
+            Ok(l) => l,
+            _ => {
+                log::warn!("Unexpected DSP item value {:?}", b.header.item_id);
+                return;
+            },
+        };
+        let new_item = self.0(my_item);
+        if my_item == new_item {
+            return;
+        }
+        b.header.item_id = new_item.into();
+        let _ = self.replace_bp_model(b, new_item);
     }
 }
 
 impl<'a> Visitor for ReplaceBuilding<'a> {
-    fn visit_building(&mut self, v: &mut crate::data::building::Building) {
-        self.replace_building(&mut v.header.item_id);
+    fn visit_building(&mut self, v: &mut Building) {
+        self.replace_building(v);
         v.visit(self)
     }
 }
