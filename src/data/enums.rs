@@ -375,15 +375,31 @@ impl Into<u32> for DSPIcon {
 )]
 #[repr(u16)]
 pub enum BPModel {
-    BeltMkI = 35,
-    BeltMkII = 36,
+    ConveyorBeltMKI = 35,
+    ConveyorBeltMKII = 36,
+    ConveyorBeltMKIII = 37,
+    SorterMKI = 41,
+    SorterMKII = 42,
+    SorterMKIII = 43,
+    AssemblingMachineMkI = 65,
+    AssemblingMachineMkII = 66,
+    AssemblingMachineMkIII = 67,
+    // TODO Some other buildings that we can't upgrade/downgrade. We can grab them from
+    // dsp_blueprint_editor at some point.
 }
 
 impl BPModel {
     pub fn from_building(i: DSPItem) -> anyhow::Result<Self> {
         let o = match i {
-            DSPItem::ConveyorBeltMKI => Self::BeltMkI,
-            DSPItem::ConveyorBeltMKII => Self::BeltMkII,
+            DSPItem::ConveyorBeltMKI => Self::ConveyorBeltMKI,
+            DSPItem::ConveyorBeltMKII => Self::ConveyorBeltMKII,
+            DSPItem::ConveyorBeltMKIII => Self::ConveyorBeltMKIII,
+            DSPItem::SorterMKI => Self::SorterMKI,
+            DSPItem::SorterMKII => Self::SorterMKII,
+            DSPItem::SorterMKIII => Self::SorterMKIII,
+            DSPItem::AssemblingMachineMkI => Self::AssemblingMachineMkI,
+            DSPItem::AssemblingMachineMkII => Self::AssemblingMachineMkII,
+            DSPItem::AssemblingMachineMkIII => Self::AssemblingMachineMkIII,
             _ => anyhow::bail!("Building {:?} has no BP model", i),
         };
         Ok(o)
