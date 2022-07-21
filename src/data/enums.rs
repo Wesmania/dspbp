@@ -2,6 +2,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 use strum::{AsRefStr, EnumIter, EnumString};
 use std::fmt::Debug;
 
+#[cfg_attr(feature = "python", pyo3::pyclass)]
 #[derive(
     TryFromPrimitive,
     IntoPrimitive,
@@ -178,6 +179,15 @@ impl DSPItem {
     }
 }
 
+#[cfg(feature = "python")]
+#[pyo3::pymethods]
+impl DSPItem {
+    fn __hash__(&self) -> isize {
+        *self as u16 as isize
+    }
+}
+
+#[cfg_attr(feature = "python", pyo3::pyclass)]
 #[derive(
     TryFromPrimitive,
     IntoPrimitive,
@@ -320,6 +330,14 @@ impl DSPRecipe {
     }
 }
 
+#[cfg(feature = "python")]
+#[pyo3::pymethods]
+impl DSPRecipe {
+    fn __hash__(&self) -> isize {
+        *self as u16 as isize
+    }
+}
+
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
 pub enum DSPIcon {
     Signal(u32),
@@ -403,5 +421,36 @@ impl BPModel {
             _ => anyhow::bail!("Building {:?} has no BP model", i),
         };
         Ok(o)
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum BuildingClass {
+    Assembler,
+    Belt,
+    Sorter,
+    Other
+}
+
+impl BuildingClass {
+    pub fn replacement_is_valid(i: DSPItem, o: DSPItem) -> bool {
+        return Self::from(i) == Self::from(o) && Self::from(i) != Self::Other
+    }
+}
+
+impl From<DSPItem> for BuildingClass {
+    fn from(i: DSPItem) -> Self {
+        match i {
+            DSPItem::AssemblingMachineMkI => Self::Assembler,
+            DSPItem::AssemblingMachineMkII => Self::Assembler,
+            DSPItem::AssemblingMachineMkIII => Self::Assembler,
+            DSPItem::SorterMKI => Self::Sorter,
+            DSPItem::SorterMKII => Self::Sorter,
+            DSPItem::SorterMKIII => Self::Sorter,
+            DSPItem::ConveyorBeltMKI => Self::Belt,
+            DSPItem::ConveyorBeltMKII => Self::Belt,
+            DSPItem::ConveyorBeltMKIII => Self::Belt,
+            _ => Self::Other,
+        }
     }
 }

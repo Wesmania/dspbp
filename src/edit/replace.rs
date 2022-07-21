@@ -4,18 +4,20 @@ pub type Replace<T> = dyn Fn(T) -> T;
 
 pub struct ReplaceItem<'a>(&'a Replace<DSPItem>);
 
-fn ri<T: TryInto<DSPItem> + From<DSPItem> + Copy + std::fmt::Debug>(s: &Replace<DSPItem>, t: &mut T) {
-    let my_item = match (*t).try_into() {
+fn ri(s: &Replace<DSPItem>, t: u32) -> u32 {
+    let my_item = match t.try_into() {
         Ok(l) => l,
         _ => {
-            log::warn!("Unexpected DSP item value {:?}", *t);
-            return;
+            if t != 0 {
+                log::warn!("Unexpected DSP item value {}", t);
+            }
+            return t;
         },
     };
     if my_item == s(my_item) {
-        return;
+        return t;
     }
-    *t = s(my_item).into();
+    s(my_item).into()
 }
 
 impl<'a> ReplaceItem<'a> {
@@ -23,7 +25,7 @@ impl<'a> ReplaceItem<'a> {
         Self(f)
     }
 
-    fn replace_item<T: TryInto<DSPItem> + From<DSPItem> + Copy + std::fmt::Debug>(&self, t: &mut T) {
+    fn replace_item(&self, t: u32) -> u32 {
         ri(self.0, t)
     }
 }
@@ -41,7 +43,7 @@ impl<'a> Visitor for ReplaceItem<'a> {
     }
 
     fn visit_station_storage(&mut self, v: &mut crate::data::station::StationStorage) {
-        self.replace_item(&mut v.item_id);
+        v.item_id = self.replace_item(v.item_id);
         v.visit(self)
     }
 
@@ -50,12 +52,12 @@ impl<'a> Visitor for ReplaceItem<'a> {
     }
 
     fn visit_belt(&mut self, v: &mut crate::data::belt::Belt) {
-        self.replace_item(&mut v.label);
+        v.label = self.replace_item(v.label);
         v.visit(self)
     }
 
     fn visit_building(&mut self, v: &mut crate::data::building::Building) {
-        self.replace_item(&mut v.header.filter_id);
+        v.header.filter_id = self.replace_item(v.header.filter_id as u32) as u16;
         v.visit(self)
     }
 }
@@ -108,37 +110,6 @@ impl<'a> Visitor for ReplaceRecipe<'a> {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum BuildingClass {
-    Assembler,
-    Belt,
-    Sorter,
-    Other
-}
-
-impl BuildingClass {
-    pub fn replacement_is_valid(i: DSPItem, o: DSPItem) -> bool {
-        return Self::from(i) == Self::from(o) && Self::from(i) != Self::Other
-    }
-}
-
-impl From<DSPItem> for BuildingClass {
-    fn from(i: DSPItem) -> Self {
-        match i {
-            DSPItem::AssemblingMachineMkI => Self::Assembler,
-            DSPItem::AssemblingMachineMkII => Self::Assembler,
-            DSPItem::AssemblingMachineMkIII => Self::Assembler,
-            DSPItem::SorterMKI => Self::Sorter,
-            DSPItem::SorterMKII => Self::Sorter,
-            DSPItem::SorterMKIII => Self::Sorter,
-            DSPItem::ConveyorBeltMKI => Self::Belt,
-            DSPItem::ConveyorBeltMKII => Self::Belt,
-            DSPItem::ConveyorBeltMKIII => Self::Belt,
-            _ => Self::Other,
-        }
-    }
-}
-
 pub struct ReplaceBuilding<'a>(&'a Replace<DSPItem>);
 
 impl<'a> ReplaceBuilding<'a> {
@@ -156,7 +127,9 @@ impl<'a> ReplaceBuilding<'a> {
         let my_item = match b.header.item_id.try_into() {
             Ok(l) => l,
             _ => {
-                log::warn!("Unexpected DSP item value {:?}", b.header.item_id);
+                if b.header.item_id != 0 {
+                    log::warn!("Unexpected DSP item value {:?}", b.header.item_id);
+                }
                 return;
             },
         };

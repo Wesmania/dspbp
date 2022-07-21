@@ -18,7 +18,13 @@ strum = { version = "*", features = ["derive"] }
 urlencoding = "*"
 log = "*"
 simple_logger = "*"
+pyo3 = { version = "*", optional = true, features = ["extension-module"] }
 
 [features]
 default = ["dump"]
 dump = ["serde", "serde_json"]
+python = ["pyo3"]
+
+[lib]
+name = "dspbp"
+crate-type = ["cdylib", "lib"]

@@ -5,7 +5,7 @@ use data::{
     enums::{DSPItem, DSPRecipe},
     traits::DSPEnum,
 };
-use edit::replace::{ReplaceItem, ReplaceRecipe, Replace, BuildingClass, ReplaceBuilding};
+use edit::EditBlueprint;
 use error::some_error;
 use std::{
     collections::HashMap,
@@ -26,6 +26,8 @@ pub(crate) mod serialize;
 pub(crate) mod stats;
 #[cfg(test)]
 pub(crate) mod testutil;
+#[cfg(feature = "python")]
+pub(crate) mod python;
 
 fn iof(arg: &Option<String>) -> Option<&str> {
     match arg.as_ref().map(|x| x.as_ref()) {
@@ -112,10 +114,6 @@ fn parse_into_enum_map<T: DSPEnum + 'static>(s: &str) -> anyhow::Result<HashMap<
     Ok(map)
 }
 
-fn map_using_map<T: DSPEnum + 'static>(m: HashMap<T, T>) -> Box<Replace<T>> {
-    Box::new(move |from| *m.get(&from).unwrap_or(&from))
-}
-
 pub fn cmdline() -> anyhow::Result<()> {
     let args = args::Args::parse();
 
@@ -165,7 +163,7 @@ pub fn cmdline() -> anyhow::Result<()> {
         Commands::Edit(eargs) => {
             let mut input = input()?;
             let mut output = output()?;
-            let mut bp = itob(&mut input)?;
+            let mut bp = EditBlueprint::new(itob(&mut input)?);
 
             let mut item_replace = HashMap::new();
             let mut recipe_replace = HashMap::new();
@@ -195,37 +193,24 @@ pub fn cmdline() -> anyhow::Result<()> {
             }
 
             if let Some(i) = eargs.replace_building {
-                let mut r = parse_into_enum_map::<DSPItem>(&i)?;
-                for (k, v) in r.iter() {
-                    if !BuildingClass::replacement_is_valid(*k, *v) {
-                        let e: crate::error::Error = format!("Cannot replace buildings: {} -> {}", k.as_ref(), v.as_ref()).into();
-                        return Err(e.into());
-                    }
-                }
-                building_replace.extend(r.drain());
+                building_replace = parse_into_enum_map::<DSPItem>(&i)?;
             }
 
             if !item_replace.is_empty() {
-                let m = map_using_map(item_replace);
-                let mut r = ReplaceItem::new(&m);
-                r.visit_blueprint(&mut bp);
+                bp.replace_item(item_replace);
             }
             if !recipe_replace.is_empty() {
-                let m = map_using_map(recipe_replace);
-                let mut r = ReplaceRecipe::new(&m);
-                r.visit_blueprint(&mut bp);
+                bp.replace_recipe(recipe_replace);
             }
 
             if !building_replace.is_empty() {
-                let m = map_using_map(building_replace);
-                let mut r = ReplaceBuilding::new(&m);
-                r.visit_blueprint(&mut bp);
+                bp.replace_building(building_replace)?;
             }
 
             if let Some(i) = eargs.icon_text {
                 bp.set_icon_text(&i);
             }
-            output.write_all(bp.into_bp_string()?.as_bytes())?;
+            output.write_all(bp.0.into_bp_string()?.as_bytes())?;
             output.flush_if_stdout()?;
         }
         Commands::Info => {
