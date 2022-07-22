@@ -5,35 +5,100 @@ on:
         types: [published]
 
 jobs:
-    publish:
-        name: Publish for ${{ matrix.os }}
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                include:
-                    - name: linux
-                      os: ubuntu-latest
-                      artifact_name: target/release/dspbp
-                      asset_name: dspbp
-                    - name: windows
-                      os: windows-latest
-                      artifact_name: target/release/dspbp.exe
-                      asset_name: dspbp.exe
+  publish:
+    name: Publish for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - name: linux
+            os: ubuntu-20.04
+            artifact_name: target/release/dspbp
+            asset_name: dspbp
+          - name: windows
+            os: windows-2019
+            artifact_name: target/release/dspbp.exe
+            asset_name: dspbp.exe
 
-        steps:
-            - uses: actions/checkout@v2
-            - uses: actions-rs/toolchain@v1
-              with:
-                  profile: minimal
-                  toolchain: stable
-            - name: Build
-              run: cargo build --release
-            - name: Upload
-              uses: svenstaro/upload-release-action@v2
-              with:
-                  repo_token: ${{ secrets.GITHUB_TOKEN }}
-                  file: ${{ matrix.artifact_name }}
-                  asset_name: ${{ matrix.asset_name }}
-                  tag: ${{ github.ref }}
-                  overwrite: true
-                  body: Binary for ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - name: Build
+        run: cargo build --release
+      - name: Upload
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ matrix.artifact_name }}
+          asset_name: ${{ matrix.asset_name }}
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: Binary for ${{ matrix.os }}
+
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, windows-2019]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v3
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: i686-pc-windows-msvc
+          override: true
+
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.4.0
+
+      - name: Build wheels
+        run: python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_BEFORE_ALL_LINUX: "curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y"
+          CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin"'
+          CIBW_SKIP: 'cp36-* *-musllinux*'
+          CIBW_ARCHS: 'auto64'
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+
+  build_sdist:
+      name: Build source distribution
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+        - uses: actions/setup-python@v2
+
+        - run: pip install setuptools-rust
+
+        - name: Build sdist
+          run: python setup.py sdist
+
+        - uses: actions/upload-artifact@v2
+          with:
+            path: dist/*.tar.gz
+
+  upload_pypi:
+      needs: [build_wheels, build_sdist]
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/download-artifact@v2
+          with:
+            name: artifact
+            path: dist
+
+        - uses: pypa/gh-action-pypi-publish@master
+          with:
+            user: __token__
+            password: ${{ secrets.pypi_password }}
+            repository_url: https://test.pypi.org/legacy/
