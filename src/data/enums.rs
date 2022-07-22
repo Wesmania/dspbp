@@ -326,7 +326,8 @@ pub enum DSPRecipe {
 
 impl DSPRecipe {
     pub fn for_item(item: &DSPItem) -> Option<Self> {
-        Self::try_from(item.as_ref()).ok()
+        let foo: &str = item.as_ref();
+        Self::try_from(foo).ok()
     }
 }
 
