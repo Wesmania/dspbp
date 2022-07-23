@@ -23,6 +23,10 @@ Windows users: dspbp is a commandline tool. To use it do the following:
 Linux users: same deal, but you probably already know how to use the terminal.
 Start with `dspbp help`, go from there.
 
+## Python bindings
+
+See [here](https://pypi.org/project/dspbp/).
+
 ## Acknowledgements
 
 * Thanks to johndoe31415 and his https://github.com/johndoe31415/dspbptk. He
@@ -36,10 +40,8 @@ Start with `dspbp help`, go from there.
 ## TODOs
 
 * Better support for replacing things:
-  * Belt labels!
   * Inserter / splitter filters!
   * Traffic monitors, I guess?
 * Changing blueprint info like description and icons.
 * Prettier error handling, eventually.
 * More blueprint edit actions, maybe?
-* A library interface. Maybe someone will want to use it as wasm?
