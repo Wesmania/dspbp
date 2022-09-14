@@ -1,6 +1,10 @@
-use pyo3::{prelude::*, types::PyBytes, exceptions::PyValueError};
+use pyo3::{exceptions::PyValueError, prelude::*, types::PyBytes};
 
-use crate::{blueprint::Blueprint, data::enums::{DSPItem, DSPRecipe}, edit::EditBlueprint};
+use crate::{
+    blueprint::Blueprint,
+    data::enums::{DSPItem, DSPRecipe},
+    edit::EditBlueprint,
+};
 use std::collections::HashMap;
 
 #[pyclass]
@@ -37,7 +41,7 @@ impl PyBlueprint {
         self.0.replace_recipe(map);
         Ok(())
     }
-    
+
     pub fn replace_both(&mut self, r: HashMap<DSPItem, DSPItem>) -> PyResult<()> {
         self.0.replace_both(r);
         Ok(())
@@ -62,7 +66,7 @@ fn load(buf: &PyAny) -> PyResult<PyBlueprint> {
 
 #[pyfunction]
 fn save<'a>(py: Python<'a>, bp: &PyBlueprint) -> PyResult<&'a PyBytes> {
-    let data = bp.0.0.into_bp_string().map_err(ve)?;
+    let data = bp.0 .0.into_bp_string().map_err(ve)?;
     Ok(PyBytes::new(py, data.as_bytes()))
 }
 

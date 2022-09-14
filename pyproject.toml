@@ -5,4 +5,5 @@ requires = [
   "wheel",
   "toml"
 ]
+dependencies = ["cffi"]
 build-backend = "setuptools.build_meta"

@@ -16,5 +16,5 @@ pub struct Belt {
 }
 
 impl Visit for Belt {
-    fn visit<T: super::visit::Visitor + ?Sized>(&mut self, _visitor: &mut T) { }
+    fn visit<T: super::visit::Visitor + ?Sized>(&mut self, _visitor: &mut T) {}
 }

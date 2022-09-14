@@ -1,6 +1,11 @@
 use crate::blueprint::Blueprint;
 
-use super::{blueprint::BlueprintData, building::Building, station::{Station, StationStorage, StationSlots}, belt::Belt};
+use super::{
+    belt::Belt,
+    blueprint::BlueprintData,
+    building::Building,
+    station::{Station, StationSlots, StationStorage},
+};
 
 pub trait Visitor {
     fn visit_blueprint(&mut self, v: &mut Blueprint) {
@@ -10,7 +15,7 @@ pub trait Visitor {
     fn visit_blueprint_data(&mut self, v: &mut BlueprintData) {
         v.visit(self)
     }
-    
+
     fn visit_building(&mut self, v: &mut Building) {
         v.visit(self)
     }
@@ -18,7 +23,7 @@ pub trait Visitor {
     fn visit_station(&mut self, v: &mut Station) {
         v.visit(self)
     }
-    
+
     fn visit_station_storage(&mut self, v: &mut StationStorage) {
         v.visit(self)
     }

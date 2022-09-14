@@ -2,12 +2,22 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 
-use crate::{blueprint::Blueprint, data::{enums::{DSPRecipe, DSPItem, BuildingClass}, visit::Visitor, traits::DSPEnum}};
+use crate::{
+    blueprint::Blueprint,
+    data::{
+        enums::{BuildingClass, DSPItem, DSPRecipe},
+        traits::DSPEnum,
+        visit::Visitor,
+    },
+};
 
-use self::{replace::{ReplaceItem, ReplaceRecipe, ReplaceBuilding, Replace}, stats::GetStats};
+use self::{
+    replace::{Replace, ReplaceBuilding, ReplaceItem, ReplaceRecipe},
+    stats::GetStats,
+};
 
-pub(crate) mod stats;
 pub(crate) mod replace;
+pub(crate) mod stats;
 
 fn map_using_map<T: DSPEnum + 'static>(m: HashMap<T, T>) -> Box<Replace<T>> {
     Box::new(move |from| *m.get(&from).unwrap_or(&from))
@@ -58,7 +68,7 @@ impl EditBlueprint {
                 let v = DSPRecipe::for_item(v)?;
                 Some((k, v))
             })
-        .collect();
+            .collect();
         self.replace_item(r);
         self.replace_recipe(r2);
     }
@@ -66,7 +76,8 @@ impl EditBlueprint {
     pub fn replace_building(&mut self, map: HashMap<DSPItem, DSPItem>) -> Result<()> {
         map.iter().try_for_each(|(i, o)| {
             if !BuildingClass::replacement_is_valid(*i, *o) {
-                let e: crate::error::Error = format!("Cannot replace buildings: {} -> {}", i.as_ref(), o.as_ref()).into();
+                let e: crate::error::Error =
+                    format!("Cannot replace buildings: {} -> {}", i.as_ref(), o.as_ref()).into();
                 Err(anyhow::Error::from(e))
             } else {
                 Ok(())

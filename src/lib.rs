@@ -14,7 +14,7 @@ use std::{
 };
 use strum::{IntoEnumIterator, ParseError};
 
-use crate::{edit::stats::GetStats, data::visit::Visitor};
+use crate::{data::visit::Visitor, edit::stats::GetStats};
 
 pub(crate) mod args;
 pub(crate) mod blueprint;
@@ -22,12 +22,12 @@ pub(crate) mod data;
 pub(crate) mod edit;
 pub(crate) mod error;
 pub(crate) mod md5;
+#[cfg(feature = "python")]
+pub(crate) mod python;
 pub(crate) mod serialize;
 pub(crate) mod stats;
 #[cfg(test)]
 pub(crate) mod testutil;
-#[cfg(feature = "python")]
-pub(crate) mod python;
 
 fn iof(arg: &Option<String>) -> Option<&str> {
     match arg.as_ref().map(|x| x.as_ref()) {
