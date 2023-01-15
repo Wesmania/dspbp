@@ -1,6 +1,6 @@
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use strum::{AsRefStr, EnumIter, EnumString};
 use std::fmt::Debug;
+use strum::{AsRefStr, EnumIter, EnumString};
 
 #[cfg_attr(feature = "python", pyo3::pyclass)]
 #[derive(
@@ -382,16 +382,7 @@ impl Into<u32> for DSPIcon {
     }
 }
 
-#[derive(
-    TryFromPrimitive,
-    IntoPrimitive,
-    PartialEq,
-    Eq,
-    Clone,
-    Copy,
-    Hash,
-    Debug,
-)]
+#[derive(TryFromPrimitive, IntoPrimitive, PartialEq, Eq, Clone, Copy, Hash, Debug)]
 #[repr(u16)]
 pub enum BPModel {
     ConveyorBeltMKI = 35,
@@ -430,12 +421,12 @@ pub enum BuildingClass {
     Assembler,
     Belt,
     Sorter,
-    Other
+    Other,
 }
 
 impl BuildingClass {
     pub fn replacement_is_valid(i: DSPItem, o: DSPItem) -> bool {
-        return Self::from(i) == Self::from(o) && Self::from(i) != Self::Other
+        return Self::from(i) == Self::from(o) && Self::from(i) != Self::Other;
     }
 }
 

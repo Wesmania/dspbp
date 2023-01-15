@@ -1,4 +1,8 @@
-use crate::data::{visit::{Visitor, Visit}, enums::{DSPIcon, DSPItem, DSPRecipe, BPModel}, building::Building};
+use crate::data::{
+    building::Building,
+    enums::{BPModel, DSPIcon, DSPItem, DSPRecipe},
+    visit::{Visit, Visitor},
+};
 
 pub type Replace<T> = dyn Fn(T) -> T;
 
@@ -12,7 +16,7 @@ fn ri(s: &Replace<DSPItem>, t: u32) -> u32 {
                 log::warn!("Unexpected DSP item value {}", t);
             }
             return t;
-        },
+        }
     };
     if my_item == s(my_item) {
         return t;
@@ -131,7 +135,7 @@ impl<'a> ReplaceBuilding<'a> {
                     log::warn!("Unexpected DSP item value {:?}", b.header.item_id);
                 }
                 return;
-            },
+            }
         };
         let new_item = self.0(my_item);
         if my_item == new_item {

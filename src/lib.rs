@@ -3,7 +3,7 @@ use blueprint::Blueprint;
 use clap::StructOpt;
 use data::{
     enums::{DSPItem, DSPRecipe},
-    traits::DSPEnum,
+    traits::{DSPEnum, TryFromUserString},
 };
 use edit::EditBlueprint;
 use error::some_error;
@@ -14,7 +14,7 @@ use std::{
 };
 use strum::{IntoEnumIterator, ParseError};
 
-use crate::{edit::stats::GetStats, data::visit::Visitor};
+use crate::{data::visit::Visitor, edit::stats::GetStats};
 
 pub(crate) mod args;
 pub(crate) mod blueprint;
@@ -22,12 +22,12 @@ pub(crate) mod data;
 pub(crate) mod edit;
 pub(crate) mod error;
 pub(crate) mod md5;
+#[cfg(feature = "python")]
+pub(crate) mod python;
 pub(crate) mod serialize;
 pub(crate) mod stats;
 #[cfg(test)]
 pub(crate) mod testutil;
-#[cfg(feature = "python")]
-pub(crate) mod python;
 
 fn iof(arg: &Option<String>) -> Option<&str> {
     match arg.as_ref().map(|x| x.as_ref()) {
@@ -93,7 +93,7 @@ fn parse_comma_list(s: &str) -> anyhow::Result<Vec<(String, String)>> {
         .map(|v| {
             let p: Vec<&str> = v.split(":").collect();
             if p.len() != 2 {
-                return Err(some_error("Invalid replacement format"));
+                return Err(some_error(format!("Invalid input in replacement list: \"{}\". Expected two names separated by a colon, ':'.", v)));
             }
             Ok((p[0].to_owned(), p[1].to_owned()))
         })
@@ -105,9 +105,9 @@ fn parse_into_enum_map<T: DSPEnum + 'static>(s: &str) -> anyhow::Result<HashMap<
     let mut map = HashMap::new();
 
     l.iter()
-        .try_for_each::<_, Result<(), ParseError>>(|(e1, e2)| {
-            let e1 = T::try_from(e1.as_ref())?;
-            let e2 = T::try_from(e2.as_ref())?;
+        .try_for_each::<_, Result<(), anyhow::Error>>(|(e1, e2)| {
+            let e1 = T::try_from_user_string(e1.as_ref())?;
+            let e2 = T::try_from_user_string(e2.as_ref())?;
             map.insert(e1, e2);
             Ok(())
         })?;
@@ -121,6 +121,7 @@ pub fn cmdline() -> anyhow::Result<()> {
         match iof(&args.input) {
             None => {
                 let mut all_input = vec![];
+                eprintln!("Reading blueprint from standard input.");
                 std::io::stdin().read_to_end(&mut all_input)?;
                 Ok(Box::new(Cursor::new(all_input)))
             }

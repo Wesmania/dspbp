@@ -13,12 +13,26 @@ pub trait DSPEnum:
     + Into<Self::Underlying>
 {
     type Underlying: Copy;
+    const PRETTY_NAME: &'static str;
 }
+
+pub trait TryFromUserString: Sized {
+    fn try_from_user_string(s: &str) -> anyhow::Result<Self>;
+}
+
+impl<T: DSPEnum> TryFromUserString for T {
+    fn try_from_user_string(s: &str) -> anyhow::Result<Self> {
+        Self::try_from(s).or_else(|_| anyhow::bail!("'{}' is not a known {}. Run 'dspbp items' or 'dspbp recipes' for a list of item/recipe names.", s, T::PRETTY_NAME))
+    }
+}
+
 impl DSPEnum for DSPRecipe {
     type Underlying = u16;
+    const PRETTY_NAME: &'static str = "recipe";
 }
 impl DSPEnum for DSPItem {
     type Underlying = u16;
+    const PRETTY_NAME: &'static str = "item";
 }
 
 macro_rules! from_into_boilerplate {

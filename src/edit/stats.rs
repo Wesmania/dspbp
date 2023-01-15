@@ -1,4 +1,7 @@
-use crate::{stats::Stats, data::visit::{Visitor, Visit}};
+use crate::{
+    data::visit::{Visit, Visitor},
+    stats::Stats,
+};
 
 pub struct GetStats(pub Stats);
 

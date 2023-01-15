@@ -52,7 +52,7 @@ pub struct StationSlots {
 }
 
 impl Visit for StationSlots {
-    fn visit<T: Visitor + ?Sized>(&mut self, _visitor: &mut T) { }
+    fn visit<T: Visitor + ?Sized>(&mut self, _visitor: &mut T) {}
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
@@ -73,7 +73,7 @@ pub struct StationStorage {
 }
 
 impl Visit for StationStorage {
-    fn visit<T: Visitor + ?Sized>(&mut self, _visitor: &mut T) { }
+    fn visit<T: Visitor + ?Sized>(&mut self, _visitor: &mut T) {}
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]

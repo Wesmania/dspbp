@@ -1,6 +1,8 @@
 use clap::{Parser, Subcommand};
 
 /// Dyson Sphere Program blueprint tool.
+///
+/// For subcommand help, use 'dspbp help <subcommand>'.
 #[derive(Parser, Debug)]
 #[clap()]
 pub struct Args {
