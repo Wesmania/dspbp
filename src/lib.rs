@@ -12,7 +12,7 @@ use std::{
     fs::File,
     io::{Cursor, Read, Seek, Stdout, Write},
 };
-use strum::{IntoEnumIterator, ParseError};
+use strum::IntoEnumIterator;
 
 use crate::{data::visit::Visitor, edit::stats::GetStats};
 
@@ -24,7 +24,6 @@ pub(crate) mod error;
 pub(crate) mod md5;
 #[cfg(feature = "python")]
 pub(crate) mod python;
-pub(crate) mod serialize;
 pub(crate) mod stats;
 #[cfg(test)]
 pub(crate) mod testutil;
