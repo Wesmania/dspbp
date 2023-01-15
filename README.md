@@ -23,6 +23,36 @@ Windows users: dspbp is a commandline tool. To use it do the following:
 Linux users: same deal, but you probably already know how to use the terminal.
 Start with `dspbp help`, go from there.
 
+## Examples
+
+I want to dump bluperint info to JSON.
+
+```
+dspbp -i blueprint.txt dump
+```
+
+I have a blueprint "72 iron.txt" that smelts 72 iron and want to make a "36 titanium.txt" blueprint that smelts 36 titanium. To do that, I have to replace all instances of iron ore with titanium ore, and iron ingot recipes with titanium ingot recipes. I also want to set icon text to "36".
+```
+dspbp -i "72 iron.txt" -o "36 titanium.txt" edit -B IronOre:TitaniumOre,IronIngot:TitaniumIngot -t "36"
+```
+
+I want to upgrade the old blueprint with green belts and mark 1 smelters to blue belts and mark 2 smelters.
+
+```
+dspbp -i "old setup.txt" -o "new setup.txt" edit -b ConveyorBeltMkII:ConveyorBeltMkIII,ArcSmelter:PlaneSmelter
+```
+
+I want to list all item or recipe names, so I know what to pass to dspbp.
+```
+dspbp items
+dspbp recipes
+```
+
+I want to print some info about a blueprint.
+```
+dspbp -i 'blueprint.txt' info
+```
+
 ## Python bindings
 
 See [here](https://pypi.org/project/dspbp/).
@@ -42,6 +72,6 @@ See [here](https://pypi.org/project/dspbp/).
 * Better support for replacing things:
   * Inserter / splitter filters!
   * Traffic monitors, I guess?
-* Changing blueprint info like description and icons.
+* Changing blueprint info like icons.
 * Prettier error handling, eventually.
 * More blueprint edit actions, maybe?

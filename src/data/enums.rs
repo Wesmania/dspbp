@@ -394,6 +394,8 @@ pub enum BPModel {
     AssemblingMachineMkI = 65,
     AssemblingMachineMkII = 66,
     AssemblingMachineMkIII = 67,
+    ArcSmelter = 62,
+    PlaneSmelter = 194,
     // TODO Some other buildings that we can't upgrade/downgrade. We can grab them from
     // dsp_blueprint_editor at some point.
 }
@@ -410,6 +412,8 @@ impl BPModel {
             DSPItem::AssemblingMachineMkI => Self::AssemblingMachineMkI,
             DSPItem::AssemblingMachineMkII => Self::AssemblingMachineMkII,
             DSPItem::AssemblingMachineMkIII => Self::AssemblingMachineMkIII,
+            DSPItem::ArcSmelter => Self::ArcSmelter,
+            DSPItem::PlaneSmelter => Self::PlaneSmelter,
             _ => anyhow::bail!("Building {:?} has no BP model", i),
         };
         Ok(o)
@@ -419,6 +423,7 @@ impl BPModel {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum BuildingClass {
     Assembler,
+    Smelter,
     Belt,
     Sorter,
     Other,
@@ -442,6 +447,8 @@ impl From<DSPItem> for BuildingClass {
             DSPItem::ConveyorBeltMKI => Self::Belt,
             DSPItem::ConveyorBeltMKII => Self::Belt,
             DSPItem::ConveyorBeltMKIII => Self::Belt,
+            DSPItem::ArcSmelter => Self::Smelter,
+            DSPItem::PlaneSmelter => Self::Smelter,
             _ => Self::Other,
         }
     }
