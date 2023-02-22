@@ -194,7 +194,7 @@ mod test {
 
         // Can't compare whole blueprints since gzip isn't really reproducible.
         let mut back = vec![];
-        bp.data.write_to(&mut Cursor::new(&mut back)).unwrap();
+        bp.data.write_le(&mut Cursor::new(&mut back)).unwrap();
         assert_eq!(raw, back);
     }
 }

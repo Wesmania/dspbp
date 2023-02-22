@@ -5,6 +5,8 @@ use std::str::FromStr;
 use crate::data::blueprint::BlueprintData;
 use crate::data::visit::{Visit, Visitor};
 use crate::error::{some_error, Error};
+use base64::Engine;
+use base64::engine::GeneralPurpose;
 use binrw::{BinReaderExt, BinWrite};
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
@@ -25,6 +27,8 @@ pub struct Blueprint {
     pub data: BlueprintData,
 }
 
+const B64: GeneralPurpose = base64::engine::general_purpose::STANDARD;
+
 impl Blueprint {
     fn int<T: FromStr>(data: &str, what: &str) -> Result<T, Error> {
         str::parse(data).map_err(|_| format!("Failed to parse {}", what).into())
@@ -32,7 +36,7 @@ impl Blueprint {
 
     fn unpack_data(b64data: &str) -> anyhow::Result<(BlueprintData, Vec<u8>)> {
         let zipped_data =
-            base64::decode(b64data).map_err(|_| some_error("Failed to base64 decode blueprint"))?;
+            B64.decode(b64data).map_err(|_| some_error("Failed to base64 decode blueprint"))?;
         let mut d = GzDecoder::new(zipped_data.as_slice());
         let mut data = vec![];
         d.read_to_end(&mut data)?;
@@ -64,10 +68,10 @@ impl Blueprint {
     fn pack_data(&self) -> anyhow::Result<String> {
         let mut e = GzEncoder::new(Vec::new(), Compression::default());
         let mut ws = Cursor::new(vec![]);
-        self.data.write_to(&mut ws)?;
+        self.data.write_le(&mut ws)?;
         e.write_all(&ws.into_inner()).unwrap();
         let gzipped_data = e.finish().unwrap();
-        Ok(base64::encode(gzipped_data.as_slice()))
+        Ok(B64.encode(gzipped_data.as_slice()))
     }
 
     pub fn new(data: &str) -> anyhow::Result<Self> {

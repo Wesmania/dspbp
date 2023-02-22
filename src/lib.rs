@@ -1,6 +1,6 @@
 use args::Commands;
 use blueprint::Blueprint;
-use clap::StructOpt;
+use clap::Parser;
 use data::{
     enums::{DSPItem, DSPRecipe},
     traits::{DSPEnum, TryFromUserString},
