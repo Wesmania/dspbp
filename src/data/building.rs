@@ -37,36 +37,88 @@ pub enum BuildingParam {
     ),
 }
 
+pub static mut RD20: bool = true;
+pub static mut RM5: bool = true;
+fn round_loc(f: f32) -> f64 {
+    if unsafe { RD20 } {
+        ((f as f64) * 20.).round() / 20.
+    } else {
+        f as f64
+    }
+}
+fn round_yew(f: f32) -> f64 {
+    if unsafe { RM5 } {
+        ((f as f64) / 5.).round() * 5.
+    } else {
+        f as f64
+    }
+}
+fn to_f32(f: &f64) -> f32 {
+    *f as f32
+}
+const DYSON_DATA: &'static [(u16, &'static str)] = &include!("DYSON_DATA.rs");
+static ID_NAME: std::sync::LazyLock<std::collections::HashMap<u16, &'static str>> =
+    std::sync::LazyLock::new(|| std::collections::HashMap::from_iter(DYSON_DATA.iter().copied()));
+static NAME_ID: std::sync::LazyLock<std::collections::HashMap<&'static str, u16>> =
+    std::sync::LazyLock::new(|| {
+        std::collections::HashMap::from_iter(DYSON_DATA.iter().map(|&(a, b)| (b, a)))
+    });
+fn ser_item_id<S: serde::Serializer>(&item: &u16, serializer: S) -> Result<S::Ok, S::Error> {
+    serializer.serialize_str(
+        ID_NAME
+            .get(&item)
+            .copied()
+            .unwrap_or(item.to_string().as_str()),
+    )
+}
+fn de_item_id<'de, D: serde::Deserializer<'de>>(de: D) -> Result<u16, D::Error> {
+    let id = String::deserialize(de)?;
+    Ok(NAME_ID
+        .get(id.as_str())
+        .map(|x| x.clone())
+        .unwrap_or(id.parse().unwrap_or(u16::MAX)))
+}
+
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
 pub struct BuildingHeader {
     #[br(little)]
     pub index: u32,
     pub area_index: i8,
+    #[br(map = round_loc)]
+    #[bw(map = to_f32)]
+    pub local_offset_x: f64,
+    #[br(map = round_loc)]
+    #[bw(map = to_f32)]
+    pub local_offset_y: f64,
+    #[br(map = round_loc)]
+    #[bw(map = to_f32)]
+    pub local_offset_z: f64,
+    #[br(map = round_loc)]
+    #[bw(map = to_f32)]
+    pub local_offset_x2: f64,
+    #[br(map = round_loc)]
+    #[bw(map = to_f32)]
+    pub local_offset_y2: f64,
+    #[br(map = round_loc)]
+    #[bw(map = to_f32)]
+    pub local_offset_z2: f64,
+    #[br(map = round_yew)]
+    #[bw(map = to_f32)]
+    pub yaw: f64,
+    #[br(map = round_yew)]
+    #[bw(map = to_f32)]
+    pub yaw2: f64,
     #[br(little)]
-    pub local_offset_x: f32,
-    #[br(little)]
-    pub local_offset_y: f32,
-    #[br(little)]
-    pub local_offset_z: f32,
-    #[br(little)]
-    pub local_offset_x2: f32,
-    #[br(little)]
-    pub local_offset_y2: f32,
-    #[br(little)]
-    pub local_offset_z2: f32,
-    #[br(little)]
-    pub yaw: f32,
-    #[br(little)]
-    pub yaw2: f32,
-    #[br(little)]
+    #[serde(serialize_with = "ser_item_id")]
+    #[serde(deserialize_with = "de_item_id")]
     pub item_id: u16,
     #[br(little)]
     pub model_index: u16,
     #[br(little)]
-    pub output_object_index: u32,
+    pub output_object_index: i32,
     #[br(little)]
-    pub input_object_index: u32,
+    pub input_object_index: i32,
     pub output_to_slot: i8,
     pub input_from_slot: i8,
     pub output_from_slot: i8,

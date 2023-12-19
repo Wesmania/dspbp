@@ -1,3 +1,4 @@
+#![feature(lazy_cell)]
 use args::Commands;
 use blueprint::Blueprint;
 use clap::Parser;
@@ -139,7 +140,10 @@ pub fn cmdline() -> anyhow::Result<()> {
             )),
         }
     };
-
+    unsafe {
+        data::building::RD20 = args.location_rounding;
+        data::building::RM5 = args.yew_rounding;
+    }
     match args.command {
         #[cfg(feature = "dump")]
         Commands::Dump => {
