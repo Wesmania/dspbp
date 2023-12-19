@@ -5,8 +5,8 @@ use std::str::FromStr;
 use crate::data::blueprint::BlueprintData;
 use crate::data::visit::{Visit, Visitor};
 use crate::error::{some_error, Error};
-use base64::Engine;
 use base64::engine::GeneralPurpose;
+use base64::Engine;
 use binrw::{BinReaderExt, BinWrite};
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
@@ -35,8 +35,9 @@ impl Blueprint {
     }
 
     fn unpack_data(b64data: &str) -> anyhow::Result<(BlueprintData, Vec<u8>)> {
-        let zipped_data =
-            B64.decode(b64data).map_err(|_| some_error("Failed to base64 decode blueprint"))?;
+        let zipped_data = B64
+            .decode(b64data)
+            .map_err(|_| some_error("Failed to base64 decode blueprint"))?;
         let mut d = GzDecoder::new(zipped_data.as_slice());
         let mut data = vec![];
         d.read_to_end(&mut data)?;
@@ -46,7 +47,7 @@ impl Blueprint {
     }
 
     fn hash_str_to_hash(d: &str) -> anyhow::Result<MD5Hash> {
-        if d.len() != 32 {
+        if d.len() < 32 {
             return Err(some_error(format!(
                 "Unexpected hash length, expected 32, got {}",
                 d.len()

@@ -14,6 +14,12 @@ pub struct Args {
     /// Output file. If absent or '-', writes to standard output.
     #[clap(short, long)]
     pub output: Option<String>,
+    /// rounding location xyz and x2y2z2 to nearst 1/20 girds.
+    #[clap(short, long)]
+    pub location_rounding: bool,
+    /// rounding yew and yew2 to 5 degree.
+    #[clap(short, long)]
+    pub yew_rounding: bool,
 }
 
 #[derive(Parser, Debug)]
