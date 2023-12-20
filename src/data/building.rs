@@ -7,16 +7,16 @@ use super::{
     belt::Belt,
     enums::DSPItem,
     station::Station,
-    visit::{Visit, Visitor},
+    visit::{Visit, Visitor}, traits::ItemId,
 };
 
-fn b_is(i: u16, f: fn(&DSPItem) -> bool) -> bool {
+fn b_is(i: ItemId<u16>, f: fn(&DSPItem) -> bool) -> bool {
     i.try_into().as_ref().map(f).unwrap_or(false)
 }
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
-#[br(import { param_count: usize, building: u16 })]
+#[br(import { param_count: usize, building: ItemId<u16> })]
 #[br(pre_assert(param_count <= 32768))]
 pub enum BuildingParam {
     #[br(pre_assert(b_is(building, DSPItem::is_station)))]
@@ -60,7 +60,7 @@ pub struct BuildingHeader {
     #[br(little)]
     pub yaw2: f32,
     #[br(little)]
-    pub item_id: u16,
+    pub item_id: ItemId<u16>,
     #[br(little)]
     pub model_index: u16,
     #[br(little)]
