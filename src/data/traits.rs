@@ -4,10 +4,10 @@ use strum::ParseError;
 
 use binrw::{BinWrite, BinRead};
 #[cfg(feature = "dump")]
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use super::enums::{DSPItem, DSPRecipe, DSPIcon, BPModel};
-use crate::localized::LocalizedEnumImpl;
+use crate::locale::LocalizedEnumImpl;
 
 pub trait DSPEnum:
     Eq

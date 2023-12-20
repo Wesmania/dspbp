@@ -7,6 +7,7 @@ use data::{
 };
 use edit::EditBlueprint;
 use error::some_error;
+use locale::{Locale, GLOBAL_SERIALIZATION_LOCALE};
 use std::{
     collections::HashMap,
     fs::File,
@@ -22,7 +23,7 @@ pub(crate) mod data;
 pub(crate) mod edit;
 pub(crate) mod error;
 pub(crate) mod md5;
-pub(crate) mod localized;
+pub(crate) mod locale;
 #[cfg(feature = "python")]
 pub(crate) mod python;
 pub(crate) mod stats;
@@ -143,7 +144,14 @@ pub fn cmdline() -> anyhow::Result<()> {
 
     match args.command {
         #[cfg(feature = "dump")]
-        Commands::Dump => {
+        Commands::Dump(args) => {
+            if args.human_readable {
+                let locale = match &args.locale {
+                    None => Locale::en_en,
+                    Some(s) => Locale::try_from_user_string(s)?,
+                };
+                let _ = GLOBAL_SERIALIZATION_LOCALE.set(locale);
+            }
             let mut input = input()?;
             let mut output = output()?;
             let bp = itob(&mut input)?;
