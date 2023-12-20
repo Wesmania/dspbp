@@ -48,11 +48,23 @@ pub struct EditArgs {
     pub icon_text: Option<String>,
 }
 
+#[derive(Parser, Debug)]
+#[clap()]
+pub struct DumpArgs {
+    /// Use human readable names for IDs of various things.
+    /// Such ouput is informational only and CANNOT BE UNDUMPED.
+    #[clap(short ='H', long, default_value_t=false)]
+    pub human_readable: bool,
+    /// Locale to use. At the moment en_en and zh_cn are supported. By default, en_en is used.
+    #[clap(short ='L', long)]
+    pub locale: Option<String>,
+}
+
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// Dump blueprint to JSON.
     #[cfg(feature = "dump")]
-    Dump,
+    Dump(DumpArgs),
     /// Undump blueprint from JSON to blueprint format.
     #[cfg(feature = "dump")]
     Undump,
