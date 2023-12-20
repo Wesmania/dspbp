@@ -105,6 +105,7 @@ macro_rules! newtype_enum {
             }
         }
 
+        #[cfg(feature = "dump")]
         impl<T: serde::Serialize + Nice + TryInto<$DSP> + From<$DSP>> serde::Serialize for $Id<T> {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
                 where
