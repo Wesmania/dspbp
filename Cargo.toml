@@ -24,6 +24,8 @@ pyo3 = { version = "*", optional = true, features = ["extension-module"] }
 default = ["dump"]
 dump = ["serde", "serde_json"]
 python = ["pyo3"]
+lang_zh = []
+lang_en = []
 
 [lib]
 name = "dspbp"

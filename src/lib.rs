@@ -1,3 +1,4 @@
+#![feature(lazy_cell)]
 use args::Commands;
 use blueprint::Blueprint;
 use clap::Parser;

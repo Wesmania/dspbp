@@ -60,6 +60,7 @@ pub struct BuildingHeader {
     #[br(little)]
     pub yaw2: f32,
     #[br(little)]
+    #[cfg_attr(feature = "dump", serde(serialize_with = "crate::data::lang::ser_item_id", deserialize_with = "crate::data::lang::de_item_id"))]
     pub item_id: u16,
     #[br(little)]
     pub model_index: u16,
