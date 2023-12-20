@@ -22,8 +22,8 @@ pub(crate) mod blueprint;
 pub(crate) mod data;
 pub(crate) mod edit;
 pub(crate) mod error;
-pub(crate) mod md5;
 pub(crate) mod locale;
+pub(crate) mod md5;
 #[cfg(feature = "python")]
 pub(crate) mod python;
 pub(crate) mod stats;

@@ -7,7 +7,8 @@ use super::{
     belt::Belt,
     enums::DSPItem,
     station::Station,
-    visit::{Visit, Visitor}, traits::{ItemId, BPModelId, RecipeId},
+    traits::{BPModelId, ItemId, RecipeId},
+    visit::{Visit, Visitor},
 };
 
 fn b_is(i: ItemId<u16>, f: fn(&DSPItem) -> bool) -> bool {

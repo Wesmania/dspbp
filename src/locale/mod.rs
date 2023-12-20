@@ -1,8 +1,11 @@
-use std::{sync::OnceLock, collections::HashMap};
+use std::{collections::HashMap, sync::OnceLock};
 
-use crate::data::{enums::{DSPItem, DSPRecipe, BPModel, DSPIcon}, traits::TryFromUserString};
+use crate::data::{
+    enums::{BPModel, DSPIcon, DSPItem, DSPRecipe},
+    traits::TryFromUserString,
+};
 use lazy_static::lazy_static;
-use strum::{EnumString, EnumIter, IntoEnumIterator, IntoStaticStr};
+use strum::{EnumIter, EnumString, IntoEnumIterator, IntoStaticStr};
 
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq, Hash, EnumString, EnumIter, IntoStaticStr, Clone, Copy)]
@@ -14,7 +17,10 @@ pub(crate) enum Locale {
 impl TryFromUserString for Locale {
     fn try_from_user_string(s: &str) -> anyhow::Result<Self> {
         Self::try_from(s).or_else(|_| {
-            let locales = Self::iter().map(|e| <&'static str>::from(e)).collect::<Vec<_>>().join(", ");
+            let locales = Self::iter()
+                .map(|e| <&'static str>::from(e))
+                .collect::<Vec<_>>()
+                .join(", ");
             anyhow::bail!("Unknown locale '{}'. Supported locales: {}.", s, locales);
         })
     }
@@ -39,11 +45,8 @@ impl<T: LocalizedEnum + 'static> LocalizedEnumImpl for T {
 
 struct LList<T: 'static>(Locale, &'static [(T, &'static str)]);
 
-static DSP_ITEM_LLIST: &[LList<DSPItem>] = &[
-    LList(Locale::en_en, &[
-          (DSPItem::IronOre, "Iron Ore"),
-    ])
-];
+static DSP_ITEM_LLIST: &[LList<DSPItem>] =
+    &[LList(Locale::en_en, &[(DSPItem::IronOre, "Iron Ore")])];
 
 static DSP_RECIPE_LLIST: &[LList<DSPRecipe>] = &[];
 static DSP_MODEL_LLIST: &[LList<BPModel>] = &[];
@@ -69,7 +72,7 @@ macro_rules! localized_enum_impl {
                 &*$table
             }
         }
-    }
+    };
 }
 
 localized_enum_impl!(DSPItem, DSP_ENUM_LOCALE, DSP_ITEM_LLIST);

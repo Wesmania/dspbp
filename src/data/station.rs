@@ -4,7 +4,10 @@ use binrw::{BinRead, BinWrite};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
-use super::{visit::{Visit, Visitor}, traits::ItemId};
+use super::{
+    traits::ItemId,
+    visit::{Visit, Visitor},
+};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]

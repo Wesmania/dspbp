@@ -1,7 +1,8 @@
 use crate::data::{
     building::Building,
     enums::{BPModel, DSPIcon, DSPItem, DSPRecipe},
-    visit::{Visit, Visitor}, traits::{ItemId, IconId, ItemIdTrait},
+    traits::{IconId, ItemId, ItemIdTrait},
+    visit::{Visit, Visitor},
 };
 
 pub type Replace<T> = dyn Fn(T) -> T;
@@ -40,7 +41,7 @@ impl<'a> ReplaceItem<'a> {
                 } else {
                     DSPIcon::Item(new).into()
                 }
-            },
+            }
             Ok(_) => t,
             Err(_) => {
                 log::warn!("Unexpected DSP item value {}", t.0);
@@ -104,7 +105,7 @@ impl<'a> ReplaceRecipe<'a> {
                 if new != i {
                     *t = DSPIcon::Recipe(new).into();
                 }
-            },
+            }
             Ok(_) => (),
             Err(_) => {
                 log::warn!("Unexpected DSP recipe value {}", t.0);

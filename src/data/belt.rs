@@ -2,7 +2,7 @@ use binrw::{BinRead, BinWrite};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
-use super::{visit::Visit, traits::IconId};
+use super::{traits::IconId, visit::Visit};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
