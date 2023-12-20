@@ -76,7 +76,7 @@ pub struct BuildingHeader {
     #[br(little)]
     pub recipe_id: RecipeId<u16>,
     #[br(little)]
-    pub filter_id: u16,
+    pub filter_id: ItemId<u16>,
     #[br(little)]
     pub parameter_count: u16,
 }
