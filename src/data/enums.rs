@@ -367,17 +367,17 @@ impl TryFrom<u32> for DSPIcon {
     }
 }
 
-impl Into<u32> for DSPIcon {
-    fn into(self) -> u32 {
-        match self {
-            Self::Signal(v) => v,
-            Self::Item(v) => v.into(),
-            Self::Recipe(v) => {
+impl From<DSPIcon> for u32 {
+    fn from(value: DSPIcon) -> Self {
+        match value {
+            DSPIcon::Signal(v) => v,
+            DSPIcon::Item(v) => v.into(),
+            DSPIcon::Recipe(v) => {
                 let v: u16 = v.into();
                 v as u32 + 20000
             }
-            Self::Tech(v) => v + 40000,
-            Self::Unknown(v) => v,
+            DSPIcon::Tech(v) => v + 40000,
+            DSPIcon::Unknown(v) => v,
         }
     }
 }
