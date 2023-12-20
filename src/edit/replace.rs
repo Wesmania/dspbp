@@ -1,20 +1,18 @@
 use crate::data::{
     building::Building,
     enums::{BPModel, DSPIcon, DSPItem, DSPRecipe},
-    visit::{Visit, Visitor}, traits::{ItemId, IconId},
+    visit::{Visit, Visitor}, traits::{ItemId, IconId, ItemIdTrait},
 };
 
 pub type Replace<T> = dyn Fn(T) -> T;
 
 pub struct ReplaceItem<'a>(&'a Replace<DSPItem>);
 
-fn ri(s: &Replace<DSPItem>, t: u32) -> u32 {
+fn ri<T: ItemIdTrait>(s: &Replace<DSPItem>, t: T) -> T {
     let my_item = match t.try_into() {
         Ok(l) => l,
         _ => {
-            if t != 0 {
-                log::warn!("Unexpected DSP item value {}", t);
-            }
+            log::warn!("Unexpected DSP item value {}", *t.base());
             return t;
         }
     };
@@ -29,7 +27,7 @@ impl<'a> ReplaceItem<'a> {
         Self(f)
     }
 
-    fn replace_item(&self, t: u32) -> u32 {
+    fn replace_item<T: ItemIdTrait>(&self, t: T) -> T {
         ri(self.0, t)
     }
 
@@ -79,7 +77,7 @@ impl<'a> Visitor for ReplaceItem<'a> {
     }
 
     fn visit_building(&mut self, v: &mut crate::data::building::Building) {
-        v.header.filter_id = self.replace_item(v.header.filter_id as u32) as u16;
+        v.header.filter_id = self.replace_item(v.header.filter_id);
         v.visit(self)
     }
 }
@@ -129,7 +127,6 @@ impl<'a> Visitor for ReplaceRecipe<'a> {
     }
 
     fn visit_station_storage(&mut self, v: &mut crate::data::station::StationStorage) {
-        self.replace_recipe(&mut v.item_id);
         v.visit(self)
     }
 

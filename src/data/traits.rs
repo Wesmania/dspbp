@@ -63,15 +63,32 @@ from_into_boilerplate!(u32, u16, DSPRecipe);
 // These are newtypes for various u16/u32 values in the blueprint. Help make sure we don't misuse
 // them and will allow for better localization in the future.
 
-pub trait Nice: for<'a> BinWrite<Args<'a> = ()> + for<'b> BinRead<Args<'b> = ()> + core::fmt::Debug + PartialEq + Eq + Clone + Copy {}
+pub trait Nice: for<'a> BinWrite<Args<'a> = ()> + for<'b> BinRead<Args<'b> = ()> + std::fmt::Debug + std::fmt::Display + PartialEq + Eq + Clone + Copy {}
 impl<T> Nice for T
-where T: for<'a> BinWrite<Args<'a> = ()> + for<'b> BinRead<Args<'b> = ()> + core::fmt::Debug + PartialEq + Eq + Clone + Copy {}
+where T: for<'a> BinWrite<Args<'a> = ()> + for<'b> BinRead<Args<'b> = ()> + std::fmt::Debug + std::fmt::Display + PartialEq + Eq + Clone + Copy {}
 
 macro_rules! newtype_enum {
-    ($DSP: ty, $Id: ident) => {
+    ($DSP: ty, $Id: ident, $GenId: ident) => {
+        pub trait $GenId: BinRead + BinWrite + std::fmt::Debug + PartialEq + Eq + Clone + Copy + TryInto<$DSP> + From<$DSP> {
+            type Base: Nice + TryInto<$DSP> + From<$DSP>;
+
+            fn base(&self) -> &Self::Base;
+            fn base_mut(&mut self) -> &mut Self::Base;
+        }
+
         #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
         #[derive(BinRead, BinWrite, Debug, PartialEq, Eq, Clone, Copy)]
         pub struct $Id<T: Nice + TryInto<$DSP> + From<$DSP>>(pub T);
+
+        impl<T: Nice + TryInto<$DSP> + From<$DSP>> $GenId for $Id<T> {
+            type Base = T;
+            fn base(&self) -> &Self::Base {
+                &self.0
+            }
+            fn base_mut(&mut self) -> &mut Self::Base {
+                &mut self.0
+            }
+        }
 
         impl<T: Nice + TryInto<$DSP> + From<$DSP>> TryFrom<$Id<T>> for $DSP {
             type Error = T::Error;
@@ -89,7 +106,7 @@ macro_rules! newtype_enum {
     }
 }
 
-newtype_enum!(DSPItem, ItemId);
-newtype_enum!(DSPRecipe, RecipeId);
-newtype_enum!(DSPIcon, IconId);
-newtype_enum!(BPModel, BPModelId);
+newtype_enum!(DSPItem, ItemId, ItemIdTrait);
+newtype_enum!(DSPRecipe, RecipeId, RecipeIdTrait);
+newtype_enum!(DSPIcon, IconId, IconIdTrait);
+newtype_enum!(BPModel, BPModelId, BPModelIdItrait);

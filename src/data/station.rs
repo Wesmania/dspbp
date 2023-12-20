@@ -4,7 +4,7 @@ use binrw::{BinRead, BinWrite};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
-use super::visit::{Visit, Visitor};
+use super::{visit::{Visit, Visitor}, traits::ItemId};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
@@ -59,7 +59,7 @@ impl Visit for StationSlots {
 #[derive(BinRead, BinWrite)]
 pub struct StationStorage {
     #[br(little)]
-    pub item_id: u32,
+    pub item_id: ItemId<u32>,
     #[br(little)]
     pub local_logic: u32,
     #[br(little)]
@@ -171,11 +171,11 @@ mod test {
         };
 
         let sto = &station.storage;
-        assert_eq!(sto[0].item_id, DSPItem::ElectromagneticMatrix as u32);
-        assert_eq!(sto[1].item_id, DSPItem::EnergyMatrix as u32);
-        assert_eq!(sto[2].item_id, DSPItem::StructureMatrix as u32);
-        assert_eq!(sto[3].item_id, DSPItem::InformationMatrix as u32);
-        assert_eq!(sto[4].item_id, DSPItem::GravityMatrix as u32);
+        assert_eq!(sto[0].item_id.0, DSPItem::ElectromagneticMatrix as u32);
+        assert_eq!(sto[1].item_id.0, DSPItem::EnergyMatrix as u32);
+        assert_eq!(sto[2].item_id.0, DSPItem::StructureMatrix as u32);
+        assert_eq!(sto[3].item_id.0, DSPItem::InformationMatrix as u32);
+        assert_eq!(sto[4].item_id.0, DSPItem::GravityMatrix as u32);
 
         let h = &station.header;
         assert_eq!(h.work_energy_per_tick, 1000_000); // 1 MW per tick, 60 MW per second
