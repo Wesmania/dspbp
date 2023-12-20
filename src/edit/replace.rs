@@ -1,7 +1,7 @@
 use crate::data::{
     building::Building,
     enums::{BPModel, DSPIcon, DSPItem, DSPRecipe},
-    visit::{Visit, Visitor},
+    visit::{Visit, Visitor}, traits::ItemId,
 };
 
 pub type Replace<T> = dyn Fn(T) -> T;
@@ -131,7 +131,7 @@ impl<'a> ReplaceBuilding<'a> {
         let my_item = match b.header.item_id.try_into() {
             Ok(l) => l,
             _ => {
-                if b.header.item_id != 0 {
+                if b.header.item_id != ItemId(0) {
                     log::warn!("Unexpected DSP item value {:?}", b.header.item_id);
                 }
                 return;
