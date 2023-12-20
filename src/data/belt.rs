@@ -2,7 +2,7 @@ use binrw::{BinRead, BinWrite};
 #[cfg(feature = "dump")]
 use serde::{Deserialize, Serialize};
 
-use super::visit::Visit;
+use super::{visit::Visit, traits::IconId};
 
 #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
 #[derive(BinRead, BinWrite)]
@@ -10,7 +10,7 @@ use super::visit::Visit;
 #[br(pre_assert(param_count == 2))]
 pub struct Belt {
     #[br(little)]
-    pub label: u32,
+    pub label: IconId<u32>,
     #[br(little)]
     pub count: u32,
 }

@@ -1,7 +1,7 @@
 use crate::data::{
     building::Building,
     enums::{BPModel, DSPIcon, DSPItem, DSPRecipe},
-    visit::{Visit, Visitor}, traits::ItemId,
+    visit::{Visit, Visitor}, traits::{ItemId, IconId},
 };
 
 pub type Replace<T> = dyn Fn(T) -> T;
@@ -32,6 +32,24 @@ impl<'a> ReplaceItem<'a> {
     fn replace_item(&self, t: u32) -> u32 {
         ri(self.0, t)
     }
+
+    fn replace_icon(&self, t: IconId<u32>) -> IconId<u32> {
+        match t.try_into() {
+            Ok(DSPIcon::Item(i)) => {
+                let new = self.0(i);
+                if new == i {
+                    t
+                } else {
+                    DSPIcon::Item(new).into()
+                }
+            },
+            Ok(_) => t,
+            Err(_) => {
+                log::warn!("Unexpected DSP item value {}", t.0);
+                t
+            }
+        }
+    }
 }
 
 impl<'a> Visitor for ReplaceItem<'a> {
@@ -56,7 +74,7 @@ impl<'a> Visitor for ReplaceItem<'a> {
     }
 
     fn visit_belt(&mut self, v: &mut crate::data::belt::Belt) {
-        v.label = self.replace_item(v.label);
+        v.label = self.replace_icon(v.label);
         v.visit(self)
     }
 
@@ -79,6 +97,22 @@ impl<'a> ReplaceRecipe<'a> {
             _ => return,
         };
         *t = (self.0)(my_item).into();
+    }
+
+    fn replace_icon(&self, t: &mut IconId<u32>) {
+        match (*t).try_into() {
+            Ok(DSPIcon::Recipe(i)) => {
+                let new = self.0(i);
+                if new != i {
+                    *t = DSPIcon::Recipe(new).into();
+                }
+            },
+            Ok(_) => (),
+            Err(_) => {
+                log::warn!("Unexpected DSP recipe value {}", t.0);
+                ()
+            }
+        }
     }
 }
 
@@ -104,7 +138,7 @@ impl<'a> Visitor for ReplaceRecipe<'a> {
     }
 
     fn visit_belt(&mut self, v: &mut crate::data::belt::Belt) {
-        self.replace_recipe(&mut v.label);
+        self.replace_icon(&mut v.label);
         v.visit(self)
     }
 
