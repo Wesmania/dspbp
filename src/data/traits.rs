@@ -7,6 +7,7 @@ use binrw::{BinWrite, BinRead};
 use serde::{Deserialize, Serialize};
 
 use super::enums::{DSPItem, DSPRecipe, DSPIcon, BPModel};
+use crate::localized::LocalizedEnumImpl;
 
 pub trait DSPEnum:
     Eq
@@ -76,7 +77,7 @@ macro_rules! newtype_enum {
             fn base_mut(&mut self) -> &mut Self::Base;
         }
 
-        #[cfg_attr(feature = "dump", derive(Serialize, Deserialize))]
+        #[cfg_attr(feature = "dump", derive(Deserialize))]
         #[derive(BinRead, BinWrite, Debug, PartialEq, Eq, Clone, Copy)]
         pub struct $Id<T: Nice + TryInto<$DSP> + From<$DSP>>(pub T);
 
@@ -102,6 +103,22 @@ macro_rules! newtype_enum {
             fn from(value: $DSP) -> Self {
                 Self(value.into())
             }
+        }
+
+        impl<T: serde::Serialize + Nice + TryInto<$DSP> + From<$DSP>> serde::Serialize for $Id<T> {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                where
+                    S: serde::Serializer,
+                {
+                    let maybe_localized = match &self.0.try_into() {
+                        Err(_) => None,
+                        Ok(v) => LocalizedEnumImpl::localize(v)
+                    };
+                    match maybe_localized {
+                        Some(s) => serializer.serialize_str(s),
+                        None => self.0.serialize(serializer)
+                    }
+                }
         }
     }
 }
