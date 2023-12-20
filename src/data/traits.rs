@@ -2,11 +2,11 @@ use std::hash::Hash;
 
 use strum::ParseError;
 
-use binrw::{BinWrite, BinRead};
+use binrw::{BinRead, BinWrite};
 #[cfg(feature = "dump")]
 use serde::Deserialize;
 
-use super::enums::{DSPItem, DSPRecipe, DSPIcon, BPModel};
+use super::enums::{BPModel, DSPIcon, DSPItem, DSPRecipe};
 use crate::locale::LocalizedEnumImpl;
 
 pub trait DSPEnum:
@@ -64,13 +64,42 @@ from_into_boilerplate!(u32, u16, DSPRecipe);
 // These are newtypes for various u16/u32 values in the blueprint. Help make sure we don't misuse
 // them and will allow for better localization in the future.
 
-pub trait Nice: for<'a> BinWrite<Args<'a> = ()> + for<'b> BinRead<Args<'b> = ()> + std::fmt::Debug + std::fmt::Display + PartialEq + Eq + Clone + Copy {}
-impl<T> Nice for T
-where T: for<'a> BinWrite<Args<'a> = ()> + for<'b> BinRead<Args<'b> = ()> + std::fmt::Debug + std::fmt::Display + PartialEq + Eq + Clone + Copy {}
+pub trait Nice:
+    for<'a> BinWrite<Args<'a> = ()>
+    + for<'b> BinRead<Args<'b> = ()>
+    + std::fmt::Debug
+    + std::fmt::Display
+    + PartialEq
+    + Eq
+    + Clone
+    + Copy
+{
+}
+impl<T> Nice for T where
+    T: for<'a> BinWrite<Args<'a> = ()>
+        + for<'b> BinRead<Args<'b> = ()>
+        + std::fmt::Debug
+        + std::fmt::Display
+        + PartialEq
+        + Eq
+        + Clone
+        + Copy
+{
+}
 
 macro_rules! newtype_enum {
     ($DSP: ty, $Id: ident, $GenId: ident) => {
-        pub trait $GenId: BinRead + BinWrite + std::fmt::Debug + PartialEq + Eq + Clone + Copy + TryInto<$DSP> + From<$DSP> {
+        pub trait $GenId:
+            BinRead
+            + BinWrite
+            + std::fmt::Debug
+            + PartialEq
+            + Eq
+            + Clone
+            + Copy
+            + TryInto<$DSP>
+            + From<$DSP>
+        {
             type Base: Nice + TryInto<$DSP> + From<$DSP>;
 
             fn base(&self) -> &Self::Base;
@@ -108,20 +137,20 @@ macro_rules! newtype_enum {
         #[cfg(feature = "dump")]
         impl<T: serde::Serialize + Nice + TryInto<$DSP> + From<$DSP>> serde::Serialize for $Id<T> {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-                where
-                    S: serde::Serializer,
-                {
-                    let maybe_localized = match &self.0.try_into() {
-                        Err(_) => None,
-                        Ok(v) => LocalizedEnumImpl::localize(v)
-                    };
-                    match maybe_localized {
-                        Some(s) => serializer.serialize_str(s),
-                        None => self.0.serialize(serializer)
-                    }
+            where
+                S: serde::Serializer,
+            {
+                let maybe_localized = match &self.0.try_into() {
+                    Err(_) => None,
+                    Ok(v) => LocalizedEnumImpl::localize(v),
+                };
+                match maybe_localized {
+                    Some(s) => serializer.serialize_str(s),
+                    None => self.0.serialize(serializer),
                 }
+            }
         }
-    }
+    };
 }
 
 newtype_enum!(DSPItem, ItemId, ItemIdTrait);
