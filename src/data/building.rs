@@ -7,7 +7,7 @@ use super::{
     belt::Belt,
     enums::DSPItem,
     station::Station,
-    visit::{Visit, Visitor}, traits::ItemId,
+    visit::{Visit, Visitor}, traits::{ItemId, BPModelId, RecipeId},
 };
 
 fn b_is(i: ItemId<u16>, f: fn(&DSPItem) -> bool) -> bool {
@@ -62,7 +62,7 @@ pub struct BuildingHeader {
     #[br(little)]
     pub item_id: ItemId<u16>,
     #[br(little)]
-    pub model_index: u16,
+    pub model_index: BPModelId<u16>,
     #[br(little)]
     pub output_object_index: u32,
     #[br(little)]
@@ -74,7 +74,7 @@ pub struct BuildingHeader {
     pub output_offset: i8,
     pub input_offset: i8,
     #[br(little)]
-    pub recipe_id: u16,
+    pub recipe_id: RecipeId<u16>,
     #[br(little)]
     pub filter_id: u16,
     #[br(little)]
