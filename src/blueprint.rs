@@ -84,7 +84,9 @@ impl Blueprint {
         if data_and_hash.len() != 2 {
             return Err(some_error("Did not find hash delimiter"));
         }
-        let [hash, mut data]: [&str; 2] = data_and_hash.try_into().unwrap();
+        let [mut hash, mut data]: [&str; 2] = data_and_hash.try_into().unwrap();
+        hash = hash.trim();
+        data = data.trim();
 
         // NOTICE: we hash the blueprint without the trailing quote!
         let hash = Self::hash_str_to_hash(hash)?;
