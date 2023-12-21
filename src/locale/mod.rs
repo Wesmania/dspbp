@@ -10,8 +10,8 @@ use strum::{EnumIter, EnumString, IntoEnumIterator, IntoStaticStr};
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq, Hash, EnumString, EnumIter, IntoStaticStr, Clone, Copy)]
 pub(crate) enum Locale {
-    en_en,
-    zh_cn,
+    en,
+    cn,
 }
 
 impl TryFromUserString for Locale {
@@ -45,10 +45,16 @@ impl<T: LocalizedEnum + 'static> LocalizedEnumImpl for T {
 
 struct LList<T: 'static>(Locale, &'static [(T, &'static str)]);
 
-static DSP_ITEM_LLIST: &[LList<DSPItem>] =
-    &[LList(Locale::en_en, &[(DSPItem::IronOre, "Iron Ore")])];
+static DSP_ITEM_LLIST: &[LList<DSPItem>] = &[
+    LList(Locale::en, include!("data/en/items.rs")),
+    LList(Locale::cn, include!("data/cn/items.rs")),
+];
 
-static DSP_RECIPE_LLIST: &[LList<DSPRecipe>] = &[];
+static DSP_RECIPE_LLIST: &[LList<DSPRecipe>] = &[
+    LList(Locale::en, include!("data/en/recipes.rs")),
+    LList(Locale::cn, include!("data/cn/recipes.rs")),
+];
+// FIXME how to extract model names from DSP? Console has no commands for that.
 static DSP_MODEL_LLIST: &[LList<BPModel>] = &[];
 
 macro_rules! localized_enum_impl {

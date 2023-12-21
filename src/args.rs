@@ -55,7 +55,7 @@ pub struct DumpArgs {
     /// Such ouput is informational only and CANNOT BE UNDUMPED.
     #[clap(short = 'H', long, default_value_t = false)]
     pub human_readable: bool,
-    /// Locale to use. At the moment en_en and zh_cn are supported. By default, en_en is used.
+    /// Locale to use. At the moment en and cn are supported. By default, en is used.
     #[clap(short = 'L', long)]
     pub locale: Option<String>,
 }
