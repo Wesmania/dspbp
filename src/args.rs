@@ -46,6 +46,12 @@ pub struct EditArgs {
     /// Replace icon text.
     #[clap(short = 't', long)]
     pub icon_text: Option<String>,
+    /// Round location and rotation of all buildings to 1/64th of a tile and 1 degree.
+    ///
+    /// This decreases blueprint size by about 30% and makes almost-on-grid buildings perfectly
+    /// on-grid. Resulting blueprints should still work. No guarantees.
+    #[clap(long, default_value_t = false)]
+    pub round: bool,
 }
 
 #[derive(Subcommand, Debug)]
