@@ -147,7 +147,7 @@ pub fn cmdline() -> anyhow::Result<()> {
         Commands::Dump(args) => {
             if args.human_readable {
                 let locale = match &args.locale {
-                    None => Locale::en_en,
+                    None => Locale::en,
                     Some(s) => Locale::try_from_user_string(s)?,
                 };
                 let _ = GLOBAL_SERIALIZATION_LOCALE.set(locale);
