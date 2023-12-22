@@ -157,7 +157,7 @@ pub fn cmdline() -> anyhow::Result<()> {
             input.read_to_end(&mut data)?;
             let data = String::from_utf8(data)?;
             let bp = Blueprint::new_from_json(&data)?;
-            output.write_all(bp.into_bp_string()?.as_bytes())?;
+            output.write_all(bp.into_bp_string(args.compression_level)?.as_bytes())?;
             output.flush_if_stdout()?;
         }
         Commands::Edit(eargs) => {
@@ -210,7 +210,7 @@ pub fn cmdline() -> anyhow::Result<()> {
             if let Some(i) = eargs.icon_text {
                 bp.set_icon_text(&i);
             }
-            output.write_all(bp.0.into_bp_string()?.as_bytes())?;
+            output.write_all(bp.0.into_bp_string(args.compression_level)?.as_bytes())?;
             output.flush_if_stdout()?;
         }
         Commands::Info => {

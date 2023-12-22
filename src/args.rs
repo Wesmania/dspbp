@@ -14,6 +14,10 @@ pub struct Args {
     /// Output file. If absent or '-', writes to standard output.
     #[clap(short, long)]
     pub output: Option<String>,
+    /// Compression level. Uses 6 by default, like DSP does. Set it to 9 for about 5% smaller
+    /// blueprints that (almost certainly) still work fine.
+    #[clap(short, long, default_value_t = 6)]
+    pub compression_level: u32
 }
 
 #[derive(Parser, Debug)]

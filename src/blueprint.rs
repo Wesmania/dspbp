@@ -65,8 +65,8 @@ impl Blueprint {
         MD5::new(Algo::MD5F).process(data.as_bytes())
     }
 
-    fn pack_data(&self) -> anyhow::Result<String> {
-        let mut e = GzEncoder::new(Vec::new(), Compression::default());
+    fn pack_data(&self, level: Compression) -> anyhow::Result<String> {
+        let mut e = GzEncoder::new(Vec::new(), level);
         let mut ws = Cursor::new(vec![]);
         self.data.write_le(&mut ws)?;
         e.write_all(&ws.into_inner()).unwrap();
@@ -152,8 +152,7 @@ impl Blueprint {
             raw_bp,
         ))
     }
-
-    pub fn into_bp_string(&self) -> anyhow::Result<String> {
+    pub fn into_bp_string(&self, level: u32) -> anyhow::Result<String> {
         let icons = self.icons.map(|x| x.to_string()).join(",");
         let mut out = format!(
             "BLUEPRINT:0,{},{},0,{},{},{},{}\"{}",
@@ -163,7 +162,7 @@ impl Blueprint {
             self.game_version,
             self.icon_text,
             self.desc,
-            self.pack_data()?
+            self.pack_data(Compression::new(level))?
         );
         let hash = Self::hash(&out);
         write!(&mut out, "\"").unwrap();

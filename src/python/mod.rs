@@ -65,8 +65,9 @@ fn load(buf: &PyAny) -> PyResult<PyBlueprint> {
 }
 
 #[pyfunction]
-fn save<'a>(py: Python<'a>, bp: &PyBlueprint) -> PyResult<&'a PyBytes> {
-    let data = bp.0 .0.into_bp_string().map_err(ve)?;
+fn save<'a>(py: Python<'a>, bp: &PyBlueprint, compression_level: Option<u32>) -> PyResult<&'a PyBytes> {
+    let cl = compression_level.unwrap_or(6);
+    let data = bp.0 .0.into_bp_string(cl).map_err(ve)?;
     Ok(PyBytes::new(py, data.as_bytes()))
 }
 
