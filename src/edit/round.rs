@@ -6,14 +6,20 @@ use crate::data::{
 pub struct Round;
 
 impl Round {
-    // Round yaw to multiple of a degree.
+    // Round yaw to a right angle if we're off by less than 3 degrees.
     fn round_yaw(&self, yaw: &mut f32) {
-        *yaw = (*yaw).round()
+        let rounded: f32 = ((*yaw as f64 / 90.0).round() * 90.0) as f32;
+        if (rounded - *yaw).abs() <= 3.0 {
+            *yaw = rounded;
+        }
     }
 
-    // Round loc to 1/64th of a tile.
+    // Round loc to closest half a tile if we're off by less than 1/64th.
     fn round_loc(&self, loc: &mut f32) {
-        *loc = (((*loc as f64) * 64.0).round() / 64.0) as f32
+        let rounded: f32 = (*loc * 2.0).round() / 2.0;
+        if (rounded - *loc).abs() <= 1.0 / 64.0 {
+            *loc = rounded;
+        }
     }
 }
 
