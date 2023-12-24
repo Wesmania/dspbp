@@ -46,6 +46,12 @@ pub struct EditArgs {
     /// Replace icon text.
     #[clap(short = 't', long)]
     pub icon_text: Option<String>,
+    /// Snap location and rotation of almsot aligned buildings to half a tile and 90 degrees.
+    ///
+    /// This decreases blueprint size by about 20% and makes almost-aligned buildings perfectly
+    /// aligned. Resulting blueprints should still work. No guarantees.
+    #[clap(long, default_value_t = false)]
+    pub round: bool,
 }
 
 #[derive(Parser, Debug)]

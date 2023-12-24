@@ -13,10 +13,12 @@ use crate::{
 
 use self::{
     replace::{Replace, ReplaceBuilding, ReplaceItem, ReplaceRecipe},
+    round::Round,
     stats::GetStats,
 };
 
 pub(crate) mod replace;
+pub(crate) mod round;
 pub(crate) mod stats;
 
 fn map_using_map<T: DSPEnum + 'static>(m: HashMap<T, T>) -> Box<Replace<T>> {
@@ -87,5 +89,10 @@ impl EditBlueprint {
         let mut r = ReplaceBuilding::new(&m);
         r.visit_blueprint(&mut self.0);
         Ok(())
+    }
+
+    pub fn round_floats(&mut self) {
+        let mut r = Round;
+        r.visit_blueprint(&mut self.0);
     }
 }

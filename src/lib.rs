@@ -219,6 +219,11 @@ pub fn cmdline() -> anyhow::Result<()> {
             if let Some(i) = eargs.icon_text {
                 bp.set_icon_text(&i);
             }
+
+            if eargs.round {
+                bp.round_floats();
+            }
+
             output.write_all(bp.0.into_bp_string(args.compression_level)?.as_bytes())?;
             output.flush_if_stdout()?;
         }
